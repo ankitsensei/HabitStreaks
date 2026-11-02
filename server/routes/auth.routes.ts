@@ -1,10 +1,10 @@
-import { Router, Request, Response } from "express";
+import express, { type Request, type Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import db from "../config/db.js";
+import db from "../config/db.ts";
 
-const router = Router();
 
+const router = express.Router();
 // REGISTER ROUTE
 router.post("/register", async (req: Request, res: Response) => {
   const { email, password } = req.body;

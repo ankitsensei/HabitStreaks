@@ -6,7 +6,7 @@ dotenv.config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
+  ssl: {  
     rejectUnauthorized: false, // Required for secure Neon connections
   },
 });

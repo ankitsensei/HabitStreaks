@@ -1,9 +1,9 @@
-import express, { Request, Response } from "express";
+import express, { type Request, type Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import authRoutes from "./routes/auth.routes.js";
-import verifyToken from "./middlewares/auth.middlewares.js";
+import authRoutes from "./routes/auth.routes.ts";
+import verifyToken from "./middlewares/auth.middlewares.ts";
 
 dotenv.config();
 
