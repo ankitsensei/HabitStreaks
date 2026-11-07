@@ -1,10 +1,14 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import { Link, useNavigate } from "react-router-dom";
 import AuthShell from "../components/auth/AuthShell";
 import {
   AlertIcon,
   ArrowRightIcon,
-  CheckIcon,
   EyeIcon,
   EyeOffIcon,
   GoogleIcon,
@@ -12,9 +16,9 @@ import {
   MailIcon,
 } from "../components/Icons";
 import { loginUser } from "../lib/api";
+import { getToken, setToken } from "../lib/auth";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TOKEN_STORAGE_KEY = "habitstreaks_token";
 
 const inputBase =
   "w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-[14.5px] text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400/70 dark:focus:ring-brand-500/15";
@@ -24,9 +28,6 @@ const inputInvalid =
 
 const primaryButton =
   "group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-fuchsia-600 px-4 py-3.5 text-[14.5px] font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:brightness-105 hover:shadow-xl hover:shadow-brand-600/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-brand-500/40";
-
-const secondaryButton =
-  "flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14px] font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08] dark:focus-visible:ring-white/10";
 
 const Spinner = ({ light = true }: { light?: boolean }) => (
   <span
@@ -45,6 +46,7 @@ const FieldError = ({ message }: { message: string }) => (
 );
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +57,12 @@ const Login = () => {
   const [googleNotice, setGoogleNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    if (getToken()) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -88,8 +95,8 @@ const Login = () => {
 
     try {
       const result = await loginUser(email.trim(), password);
-      localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
-      setIsSignedIn(true);
+      setToken(result.token);
+      navigate("/", { replace: true });
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -133,46 +140,10 @@ const Login = () => {
     );
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    setPassword("");
-    setFormError(null);
-    setInfoNotice(null);
-    setIsSignedIn(false);
-  };
-
   return (
     <AuthShell>
-      {isSignedIn ? (
-        <div className="animate-fade-up text-center">
-          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
-            <CheckIcon className="h-7 w-7" />
-          </span>
-
-          <h1 className="mt-6 text-[28px] font-bold tracking-tight text-slate-900 sm:text-[32px] dark:text-white">
-            Welcome back!
-          </h1>
-          <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-slate-500 dark:text-slate-400">
-            You&apos;re signed in as{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
-              {email}
-            </span>
-            . Your habit dashboard will appear here once it&apos;s built.
-          </p>
-
-          <div className="mt-8">
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className={secondaryButton}
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="animate-fade-up">
-          <header>
+      <div className="animate-fade-up">
+        <header>
             <h1 className="text-[28px] font-bold tracking-tight text-slate-900 sm:text-[32px] dark:text-white">
               Welcome back
             </h1>
@@ -335,8 +306,7 @@ const Login = () => {
               Create an account
             </Link>
           </p>
-        </div>
-      )}
+      </div>
     </AuthShell>
   );
 };

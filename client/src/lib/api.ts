@@ -51,6 +51,7 @@ export interface RegisterResult {
 
 export interface VerifyOtpResult {
   message: string;
+  token: string;
 }
 
 export interface LoginResult {

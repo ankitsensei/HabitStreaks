@@ -201,6 +201,39 @@ export const SparkIcon = (props: IconProps) => (
   </svg>
 );
 
+export const LogoutIcon = (props: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+    <path d="m10 17 5-5-5-5" />
+    <path d="M15 12H3" />
+  </svg>
+);
+
+export const CalendarIcon = (props: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.7"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
+    <path d="M8 3v3M16 3v3M3 9.5h18" />
+  </svg>
+);
+
 export const AlertIcon = (props: IconProps) => (
   <svg
     viewBox="0 0 24 24"

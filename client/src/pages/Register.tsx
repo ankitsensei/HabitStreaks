@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -6,6 +7,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertIcon,
   ArrowLeftIcon,
@@ -22,8 +24,9 @@ import {
   SparkIcon,
 } from "../components/Icons";
 import { registerUser, verifyOtp } from "../lib/api";
+import { getToken, setToken } from "../lib/auth";
 
-type Step = "form" | "verify" | "success";
+type Step = "form" | "verify";
 
 const OTP_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,9 +39,6 @@ const inputInvalid =
 
 const primaryButton =
   "group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-fuchsia-600 px-4 py-3.5 text-[14.5px] font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:brightness-105 hover:shadow-xl hover:shadow-brand-600/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-brand-500/40";
-
-const secondaryButton =
-  "flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14px] font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08] dark:focus-visible:ring-white/10";
 
 const Spinner = ({ light = true }: { light?: boolean }) => (
   <span
@@ -145,6 +145,14 @@ const Register = () => {
   const [otpError, setOtpError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (getToken()) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   const passwordChecks = {
     length: password.length >= 8,
@@ -274,8 +282,9 @@ const Register = () => {
     setIsVerifying(true);
 
     try {
-      await verifyOtp(email.trim(), code);
-      setStep("success");
+      const result = await verifyOtp(email.trim(), code);
+      setToken(result.token);
+      navigate("/", { replace: true });
     } catch (error) {
       setOtpError(
         error instanceof Error
@@ -324,20 +333,6 @@ const Register = () => {
     setOtp(Array(OTP_LENGTH).fill(""));
     setOtpError(null);
     setVerifyNotice(null);
-  };
-
-  const resetForm = () => {
-    setStep("form");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setAcceptedTerms(false);
-    setErrors({});
-    setFormError(null);
-    setGoogleNotice(null);
-    setVerifyNotice(null);
-    setOtp(Array(OTP_LENGTH).fill(""));
-    setOtpError(null);
   };
 
   return (
@@ -808,36 +803,6 @@ const Register = () => {
                   </button>
                   .
                 </p>
-              </div>
-            )}
-
-            {step === "success" && (
-              <div key="success" className="animate-fade-up text-center">
-                <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
-                  <CheckIcon className="h-7 w-7" />
-                </span>
-
-                <h1 className="mt-6 text-[28px] font-bold tracking-tight text-slate-900 sm:text-[32px] dark:text-white">
-                  You&apos;re all set!
-                </h1>
-                <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-slate-500 dark:text-slate-400">
-                  Your email is verified. Sign in to start your first streak and
-                  make every day count.
-                </p>
-
-                <div className="mt-8 space-y-3">
-                  <a href="/login" className={primaryButton}>
-                    Sign in to HabitStreaks
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </a>
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className={secondaryButton}
-                  >
-                    Create another account
-                  </button>
-                </div>
               </div>
             )}
           </div>

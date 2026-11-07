@@ -84,8 +84,15 @@ router.post("/verify-otp", async (req: Request, res: Response) => {
       [email],
     );
 
+    // Sign the user in straight away so registration can land on the homepage
+    const payload = { userId: user.id, email: user.email };
+    const secret = process.env.JWT_SECRET as string;
+    const expiresIn = (process.env.JWT_EXPIRES_IN || "1h") as any;
+    const token = jwt.sign(payload, secret, { expiresIn });
+
     return res.json({
-      message: "Email verified successfully! You can now log in.",
+      message: "Email verified successfully!",
+      token,
     });
   } catch (err) {
     console.error(err);
