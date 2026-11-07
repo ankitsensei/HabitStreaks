@@ -11,6 +11,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export const verifyEmailTransport = async () => {
+  try {
+    await transporter.verify();
+    console.log("Email transport is ready.");
+  } catch (error) {
+    console.error(
+      "Email transport is NOT ready. OTP emails will fail:",
+      error instanceof Error ? error.message : error,
+    );
+  }
+};
+
 export const sendOtpEmail = async (to: string, otp: string) => {
   const mailOptions = {
     from: `"HabitStreaks Support" <${process.env.EMAIL_USER}>`,

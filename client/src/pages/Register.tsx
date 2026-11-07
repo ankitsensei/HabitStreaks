@@ -1,16 +1,12 @@
 import {
   useEffect,
-  useRef,
   useState,
   type ChangeEvent,
-  type ClipboardEvent,
   type FormEvent,
-  type KeyboardEvent,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertIcon,
-  ArrowLeftIcon,
   ArrowRightIcon,
   ChartIcon,
   CheckIcon,
@@ -23,12 +19,9 @@ import {
   ShieldIcon,
   SparkIcon,
 } from "../components/Icons";
-import { registerUser, verifyOtp } from "../lib/api";
-import { getToken, setToken } from "../lib/auth";
+import { registerUser } from "../lib/api";
+import { getToken } from "../lib/auth";
 
-type Step = "form" | "verify";
-
-const OTP_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const inputBase =
@@ -125,8 +118,6 @@ const streakDays = [
 ];
 
 const Register = () => {
-  const [step, setStep] = useState<Step>("form");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -137,14 +128,8 @@ const Register = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [googleNotice, setGoogleNotice] = useState<string | null>(null);
-  const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
-  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const navigate = useNavigate();
 
@@ -206,13 +191,14 @@ const Register = () => {
 
     setIsLoading(true);
 
+    const trimmedEmail = email.trim();
+
     try {
-      const result = await registerUser(email.trim(), password);
-      setOtp(Array(OTP_LENGTH).fill(""));
-      setOtpError(null);
-      setVerifyNotice(result.message);
-      setStep("verify");
-      requestAnimationFrame(() => otpRefs.current[0]?.focus());
+      await registerUser(trimmedEmail, password);
+
+      navigate("/verify-otp", {
+        state: { email: trimmedEmail },
+      });
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -221,78 +207,6 @@ const Register = () => {
       );
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    const digit = value.replace(/\D/g, "").slice(-1);
-    const next = [...otp];
-    next[index] = digit;
-    setOtp(next);
-
-    if (digit && index < OTP_LENGTH - 1) {
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (
-    index: number,
-    event: KeyboardEvent<HTMLInputElement>,
-  ) => {
-    if (event.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-    if (event.key === "ArrowLeft" && index > 0) {
-      event.preventDefault();
-      otpRefs.current[index - 1]?.focus();
-    }
-    if (event.key === "ArrowRight" && index < OTP_LENGTH - 1) {
-      event.preventDefault();
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (event: ClipboardEvent<HTMLInputElement>) => {
-    const digits = event.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, OTP_LENGTH);
-
-    if (!digits) return;
-
-    event.preventDefault();
-    const next = Array(OTP_LENGTH).fill("");
-    digits.split("").forEach((digit, index) => {
-      next[index] = digit;
-    });
-    setOtp(next);
-    otpRefs.current[Math.min(digits.length, OTP_LENGTH - 1)]?.focus();
-  };
-
-  const handleVerifyOtp = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setOtpError(null);
-
-    const code = otp.join("");
-    if (code.length !== OTP_LENGTH) {
-      setOtpError("Enter the 6-digit code from your email.");
-      return;
-    }
-
-    setIsVerifying(true);
-
-    try {
-      const result = await verifyOtp(email.trim(), code);
-      setToken(result.token);
-      navigate("/", { replace: true });
-    } catch (error) {
-      setOtpError(
-        error instanceof Error
-          ? error.message
-          : "We couldn't verify that code. Please try again.",
-      );
-    } finally {
-      setIsVerifying(false);
     }
   };
 
@@ -326,13 +240,6 @@ const Register = () => {
     window.location.assign(
       `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
     );
-  };
-
-  const handleChangeEmail = () => {
-    setStep("form");
-    setOtp(Array(OTP_LENGTH).fill(""));
-    setOtpError(null);
-    setVerifyNotice(null);
   };
 
   return (
@@ -436,9 +343,8 @@ const Register = () => {
               <Logo compact />
             </div>
 
-            {step === "form" && (
-              <div key="form" className="animate-fade-up">
-                <header>
+            <div className="animate-fade-up">
+              <header>
                   <h1 className="text-[28px] font-bold tracking-tight text-slate-900 sm:text-[32px] dark:text-white">
                     Create your account
                   </h1>
@@ -701,110 +607,7 @@ const Register = () => {
                     Sign in
                   </a>
                 </p>
-              </div>
-            )}
-
-            {step === "verify" && (
-              <div key="verify" className="animate-fade-up">
-                <button
-                  type="button"
-                  onClick={handleChangeEmail}
-                  className="mb-8 inline-flex items-center gap-1.5 rounded-lg text-[12.5px] font-semibold text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:text-slate-400 dark:hover:text-slate-100"
-                >
-                  <ArrowLeftIcon className="h-4 w-4" />
-                  Back
-                </button>
-
-                <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-400/20">
-                  <MailIcon className="h-6 w-6" />
-                </span>
-
-                <h1 className="mt-6 text-[28px] font-bold tracking-tight text-slate-900 sm:text-[32px] dark:text-white">
-                  Check your inbox
-                </h1>
-                <p className="mt-2 text-[14px] leading-relaxed text-slate-500 dark:text-slate-400">
-                  We sent a 6-digit verification code to{" "}
-                  <span className="font-semibold text-slate-700 dark:text-slate-200">
-                    {email}
-                  </span>
-                  . Enter it below to finish creating your account.
-                </p>
-
-                {verifyNotice && (
-                  <div className="mt-5 flex items-start gap-2 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
-                    <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{verifyNotice}</span>
-                  </div>
-                )}
-
-                <form className="mt-7 space-y-5" onSubmit={handleVerifyOtp}>
-                  <div>
-                    <label className="mb-2 block text-[12.5px] font-semibold text-slate-700 dark:text-slate-300">
-                      Verification code
-                    </label>
-                    <div className="flex gap-2 sm:gap-2.5">
-                      {otp.map((digit, index) => (
-                        <input
-                          key={index}
-                          ref={(element) => {
-                            otpRefs.current[index] = element;
-                          }}
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete={index === 0 ? "one-time-code" : "off"}
-                          maxLength={1}
-                          value={digit}
-                          onChange={(event) =>
-                            handleOtpChange(index, event.target.value)
-                          }
-                          onKeyDown={(event) =>
-                            handleOtpKeyDown(index, event)
-                          }
-                          onPaste={handleOtpPaste}
-                          aria-label={`Digit ${index + 1}`}
-                          className={`h-14 w-full min-w-0 rounded-xl border bg-white text-center text-xl font-semibold text-slate-900 shadow-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100 dark:bg-white/[0.04] dark:text-white dark:focus:border-brand-400/70 dark:focus:ring-brand-500/15 ${
-                            otpError
-                              ? "border-rose-300 dark:border-rose-400/40"
-                              : "border-slate-200 dark:border-white/10"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    {otpError && <FieldError message={otpError} />}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isVerifying}
-                    className={primaryButton}
-                  >
-                    {isVerifying ? (
-                      <>
-                        <Spinner />
-                        Verifying…
-                      </>
-                    ) : (
-                      <>
-                        Verify email
-                        <CheckIcon className="h-4 w-4" />
-                      </>
-                    )}
-                  </button>
-                </form>
-
-                <p className="mt-6 text-center text-[12.5px] leading-relaxed text-slate-400 dark:text-slate-500">
-                  Didn&apos;t get the email? Check your spam folder or{" "}
-                  <button
-                    type="button"
-                    onClick={handleChangeEmail}
-                    className="font-semibold text-brand-700 hover:underline dark:text-brand-300"
-                  >
-                    use a different email
-                  </button>
-                  .
-                </p>
-              </div>
-            )}
+            </div>
           </div>
         </section>
       </main>

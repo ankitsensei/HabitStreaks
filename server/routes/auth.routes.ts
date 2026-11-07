@@ -5,6 +5,51 @@ import db from "../config/db.ts";
 import { sendOtpEmail } from "../src/utils/sendEmail.ts";
 
 const router = express.Router();
+
+const OTP_TTL_MS = 10 * 60 * 1000;
+
+const createOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+type OtpDeliveryResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+const sendVerificationCode = async (
+  email: string,
+  otp: string,
+): Promise<OtpDeliveryResult> => {
+  try {
+    await sendOtpEmail(email, otp);
+    return { ok: true };
+  } catch (error) {
+    console.error(`Failed to send OTP email to ${email}:`, error);
+
+    const mailError = error as { code?: string; responseCode?: number };
+
+    if (mailError.code === "EAUTH" || mailError.responseCode === 535) {
+      return {
+        ok: false,
+        error:
+          "We couldn't send the verification email because the mail service is not configured correctly. Please try again later.",
+      };
+    }
+
+    if (mailError.code === "EENVELOPE") {
+      return {
+        ok: false,
+        error:
+          "We couldn't send the verification email. Please check the email address and try again.",
+      };
+    }
+
+    return {
+      ok: false,
+      error:
+        "We couldn't send the verification email right now. Please try again later.",
+    };
+  }
+};
+
 // REGISTER ROUTE
 router.post("/register", async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -14,32 +59,53 @@ router.post("/register", async (req: Request, res: Response) => {
   }
 
   try {
-    const userExists = await db.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
-    if (userExists.rows.length > 0) {
+    const existingUser = await db.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email],
+    );
+
+    if (existingUser.rows.length > 0 && existingUser.rows[0].is_verified) {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = createOtp();
+    const otpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
 
-    // Generate 6-digit OTP and set expiration (10 minutes from now)
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    // Only create/update the account after the email was actually sent.
+    const delivery = await sendVerificationCode(email, otp);
+    if (!delivery.ok) {
+      return res.status(502).json({ error: delivery.error });
+    }
 
-    // Insert user with OTP and is_verified set to FALSE
+    if (existingUser.rows.length > 0) {
+      const user = existingUser.rows[0];
+
+      // The account exists but was never verified: let the user retry by
+      // refreshing the password and issuing a new code.
+      await db.query(
+        "UPDATE users SET password = $1, otp = $2, otp_expires_at = $3, is_verified = FALSE WHERE email = $4",
+        [hashedPassword, otp, otpExpiresAt, email],
+      );
+
+      return res.status(200).json({
+        message: "We sent a new verification code to your email.",
+        user: {
+          id: user.id,
+          email: user.email,
+          created_at: user.created_at,
+        },
+      });
+    }
+
     const newUser = await db.query(
       "INSERT INTO users (email, password, otp, otp_expires_at, is_verified) VALUES ($1, $2, $3, $4, FALSE) RETURNING id, email, created_at",
-      [email, hashedPassword, otp, otpExpiresAt], 
+      [email, hashedPassword, otp, otpExpiresAt],
     );
-
-    // Send the OTP via Gmail
-    await sendOtpEmail(email, otp);
 
     return res.status(201).json({
       message:
-        "User registered successfully. Please check your Gmail for the OTP code.",
+        "User registered successfully. Please check your email for the OTP code.",
       user: newUser.rows[0],
     });
   } catch (err) {
@@ -48,7 +114,7 @@ router.post("/register", async (req: Request, res: Response) => {
   }
 });
 
-// VERIFY OTP ROUTE (New Route)
+// VERIFY OTP ROUTE
 router.post("/verify-otp", async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
@@ -78,7 +144,6 @@ router.post("/verify-otp", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "OTP has expired" });
     }
 
-    // Mark user as verified and clear OTP fields
     await db.query(
       "UPDATE users SET is_verified = TRUE, otp = NULL, otp_expires_at = NULL WHERE email = $1",
       [email],
@@ -93,6 +158,53 @@ router.post("/verify-otp", async (req: Request, res: Response) => {
     return res.json({
       message: "Email verified successfully!",
       token,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// RESEND OTP ROUTE
+router.post("/resend-otp", async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = result.rows[0];
+
+    if (user.is_verified) {
+      return res
+        .status(400)
+        .json({ error: "This email is already verified. Try signing in." });
+    }
+
+    const otp = createOtp();
+    const otpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
+
+    // Send first so the stored code always matches a delivered email.
+    const delivery = await sendVerificationCode(email, otp);
+    if (!delivery.ok) {
+      return res.status(502).json({ error: delivery.error });
+    }
+
+    await db.query(
+      "UPDATE users SET otp = $1, otp_expires_at = $2 WHERE email = $3",
+      [otp, otpExpiresAt, email],
+    );
+
+    return res.json({
+      message: "A new verification code was sent to your email.",
     });
   } catch (err) {
     console.error(err);

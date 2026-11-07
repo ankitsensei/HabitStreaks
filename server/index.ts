@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/auth.routes.ts";
 import verifyToken from "./middlewares/auth.middlewares.ts";
+import { verifyEmailTransport } from "./src/utils/sendEmail.ts";
 
 dotenv.config();
 
@@ -27,4 +28,5 @@ app.get("/api/protected", verifyToken, (req: Request, res: Response) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  void verifyEmailTransport();
 });

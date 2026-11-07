@@ -15,7 +15,7 @@ import {
   LockIcon,
   MailIcon,
 } from "../components/Icons";
-import { loginUser } from "../lib/api";
+import { ApiError, loginUser } from "../lib/api";
 import { getToken, setToken } from "../lib/auth";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -98,6 +98,11 @@ const Login = () => {
       setToken(result.token);
       navigate("/", { replace: true });
     } catch (error) {
+      if (error instanceof ApiError && error.status === 403) {
+        navigate("/verify-otp", { state: { email: email.trim() } });
+        return;
+      }
+
       setFormError(
         error instanceof Error
           ? error.message
