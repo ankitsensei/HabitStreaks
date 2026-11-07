@@ -42,11 +42,6 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 
 export interface RegisterResult {
   message: string;
-  user: {
-    id: number;
-    email: string;
-    created_at: string;
-  };
 }
 
 export interface VerifyOtpResult {

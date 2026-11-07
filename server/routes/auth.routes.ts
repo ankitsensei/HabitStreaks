@@ -10,44 +10,19 @@ const OTP_TTL_MS = 10 * 60 * 1000;
 
 const createOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-type OtpDeliveryResult =
-  | { ok: true }
-  | { ok: false; error: string };
-
-const sendVerificationCode = async (
-  email: string,
-  otp: string,
-): Promise<OtpDeliveryResult> => {
+const sendVerificationCode = async (email: string, otp: string) => {
   try {
     await sendOtpEmail(email, otp);
-    return { ok: true };
+    return true;
   } catch (error) {
     console.error(`Failed to send OTP email to ${email}:`, error);
-
-    const mailError = error as { code?: string; responseCode?: number };
-
-    if (mailError.code === "EAUTH" || mailError.responseCode === 535) {
-      return {
-        ok: false,
-        error:
-          "We couldn't send the verification email because the mail service is not configured correctly. Please try again later.",
-      };
-    }
-
-    if (mailError.code === "EENVELOPE") {
-      return {
-        ok: false,
-        error:
-          "We couldn't send the verification email. Please check the email address and try again.",
-      };
-    }
-
-    return {
-      ok: false,
-      error:
-        "We couldn't send the verification email right now. Please try again later.",
-    };
+    return false;
   }
+};
+
+const emailDeliveryError = {
+  error:
+    "We couldn't send the verification email right now. Please try again later.",
 };
 
 // REGISTER ROUTE
@@ -73,9 +48,9 @@ router.post("/register", async (req: Request, res: Response) => {
     const otpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
 
     // Only create/update the account after the email was actually sent.
-    const delivery = await sendVerificationCode(email, otp);
-    if (!delivery.ok) {
-      return res.status(502).json({ error: delivery.error });
+    const otpSent = await sendVerificationCode(email, otp);
+    if (!otpSent) {
+      return res.status(502).json(emailDeliveryError);
     }
 
     if (existingUser.rows.length > 0) {
@@ -193,9 +168,9 @@ router.post("/resend-otp", async (req: Request, res: Response) => {
     const otpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
 
     // Send first so the stored code always matches a delivered email.
-    const delivery = await sendVerificationCode(email, otp);
-    if (!delivery.ok) {
-      return res.status(502).json({ error: delivery.error });
+    const otpSent = await sendVerificationCode(email, otp);
+    if (!otpSent) {
+      return res.status(502).json(emailDeliveryError);
     }
 
     await db.query(
