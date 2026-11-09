@@ -62,6 +62,70 @@ const daysBetween = (from: string, to: string) =>
       86_400_000,
   ) + 1;
 
+interface HabitInput {
+  name: string;
+  icon: string;
+  color: string;
+  category: HabitCategory;
+  targetPerWeek: number;
+}
+
+type HabitInputResult =
+  | { ok: true; value: HabitInput }
+  | { ok: false; error: string };
+
+const parseHabitInput = (body: Record<string, unknown>): HabitInputResult => {
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const icon = typeof body.icon === "string" ? body.icon.trim() : "";
+  const color = typeof body.color === "string" ? body.color.trim() : "";
+  const category = body.category;
+  const targetPerWeek =
+    typeof body.targetPerWeek === "number" ? body.targetPerWeek : Number.NaN;
+
+  if (!name) {
+    return { ok: false, error: "Habit name is required." };
+  }
+
+  if (name.length > 100) {
+    return {
+      ok: false,
+      error: "Habit name must be 100 characters or fewer.",
+    };
+  }
+
+  if (!icon) {
+    return { ok: false, error: "Choose a habit icon." };
+  }
+
+  if (icon.length > 50) {
+    return { ok: false, error: "That habit icon is too long." };
+  }
+
+  if (!HEX_COLOR.test(color)) {
+    return { ok: false, error: "Choose a valid habit color." };
+  }
+
+  if (!isHabitCategory(category)) {
+    return { ok: false, error: "Choose a valid category." };
+  }
+
+  if (
+    !Number.isInteger(targetPerWeek) ||
+    targetPerWeek < 1 ||
+    targetPerWeek > 7
+  ) {
+    return {
+      ok: false,
+      error: "Targets per week must be between 1 and 7.",
+    };
+  }
+
+  return {
+    ok: true,
+    value: { name, icon, color, category, targetPerWeek },
+  };
+};
+
 // List the signed-in user's habits with completions for a date range.
 router.get("/", async (req: Request, res: Response) => {
   const userId = getUserId(req);
@@ -156,49 +220,10 @@ router.get("/", async (req: Request, res: Response) => {
 
 // Add Habit
 router.post("/newhabit", async (req: Request, res: Response) => {
-  const body = (req.body ?? {}) as Record<string, unknown>;
+  const parsed = parseHabitInput((req.body ?? {}) as Record<string, unknown>);
 
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  const icon = typeof body.icon === "string" ? body.icon.trim() : "";
-  const color = typeof body.color === "string" ? body.color.trim() : "";
-  const category = body.category;
-  const targetPerWeek =
-    typeof body.targetPerWeek === "number" ? body.targetPerWeek : Number.NaN;
-
-  if (!name) {
-    return res.status(400).json({ error: "Habit name is required." });
-  }
-
-  if (name.length > 100) {
-    return res
-      .status(400)
-      .json({ error: "Habit name must be 100 characters or fewer." });
-  }
-
-  if (!icon) {
-    return res.status(400).json({ error: "Choose a habit icon." });
-  }
-
-  if (icon.length > 50) {
-    return res.status(400).json({ error: "That habit icon is too long." });
-  }
-
-  if (!HEX_COLOR.test(color)) {
-    return res.status(400).json({ error: "Choose a valid habit color." });
-  }
-
-  if (!isHabitCategory(category)) {
-    return res.status(400).json({ error: "Choose a valid category." });
-  }
-
-  if (
-    !Number.isInteger(targetPerWeek) ||
-    targetPerWeek < 1 ||
-    targetPerWeek > 7
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Targets per week must be between 1 and 7." });
+  if (!parsed.ok) {
+    return res.status(400).json({ error: parsed.error });
   }
 
   const userId = getUserId(req);
@@ -206,6 +231,8 @@ router.post("/newhabit", async (req: Request, res: Response) => {
   if (!userId) {
     return res.status(401).json({ error: "Authentication required." });
   }
+
+  const { name, icon, color, category, targetPerWeek } = parsed.value;
 
   try {
     const result = await db.query(
@@ -224,6 +251,58 @@ router.post("/newhabit", async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ error: "Couldn't add the habit. Please try again." });
+  }
+});
+
+// Update a habit's details.
+router.patch("/:habitId", async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+
+  if (!userId) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  const habitId = Number(req.params.habitId);
+
+  if (!Number.isInteger(habitId) || habitId <= 0) {
+    return res.status(400).json({ error: "Invalid habit id." });
+  }
+
+  const parsed = parseHabitInput((req.body ?? {}) as Record<string, unknown>);
+
+  if (!parsed.ok) {
+    return res.status(400).json({ error: parsed.error });
+  }
+
+  const { name, icon, color, category, targetPerWeek } = parsed.value;
+
+  try {
+    const result = await db.query(
+      `UPDATE habits
+       SET name = $1,
+           icon = $2,
+           color = $3,
+           category = $4,
+           target_per_week = $5,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6 AND user_id = $7
+       RETURNING id, user_id, name, icon, color, category, target_per_week, created_at, updated_at`,
+      [name, icon, color, category, targetPerWeek, habitId, userId],
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Habit not found." });
+    }
+
+    return res.json({
+      message: "Habit updated successfully.",
+      habit: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Failed to update habit:", error);
+    return res
+      .status(500)
+      .json({ error: "Couldn't update the habit. Please try again." });
   }
 });
 
