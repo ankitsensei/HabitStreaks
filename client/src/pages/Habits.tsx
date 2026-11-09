@@ -6,10 +6,17 @@ import {
   CheckIcon,
   FlameIcon,
   LogoutIcon,
+  PencilIcon,
   SparkIcon,
 } from "../components/Icons";
-import { ApiError, getHabits, toggleHabitCompletion } from "../lib/api";
-import type { HabitWithCompletions } from "../lib/api";
+import EditHabitModal from "../components/EditHabitModal";
+import {
+  ApiError,
+  getHabits,
+  toggleHabitCompletion,
+  updateHabit,
+} from "../lib/api";
+import type { HabitWithCompletions, NewHabitInput } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
 
 const WEEKS_IN_GRAPH = 53;
@@ -204,6 +211,7 @@ interface HabitCardProps {
   todayKey: string;
   pending: Set<string>;
   onToggle: HabitGraphProps["onToggle"];
+  onEdit: (habit: HabitWithCompletions) => void;
 }
 
 const HabitCard = ({
@@ -212,6 +220,7 @@ const HabitCard = ({
   todayKey,
   pending,
   onToggle,
+  onEdit,
 }: HabitCardProps) => (
   <article className="rounded-[22px] border border-slate-200 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
     <div className="flex items-center gap-3.5">
@@ -236,6 +245,16 @@ const HabitCard = ({
         {habit.completions.length}{" "}
         {habit.completions.length === 1 ? "day" : "days"}
       </span>
+
+      <button
+        type="button"
+        onClick={() => onEdit(habit)}
+        aria-label={`Edit ${habit.name}`}
+        title="Edit habit"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-400 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 dark:hover:border-brand-400/30 dark:hover:bg-brand-500/10 dark:hover:text-brand-300 dark:focus-visible:ring-brand-500/20"
+      >
+        <PencilIcon className="h-3.5 w-3.5" />
+      </button>
     </div>
 
     <HabitGraph
@@ -269,9 +288,16 @@ const Habits = () => {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const pendingRef = useRef<Set<string>>(new Set());
-  const [addedHabit, setAddedHabit] = useState<string | null>(() => {
+  const [editingHabit, setEditingHabit] =
+    useState<HabitWithCompletions | null>(null);
+  const [notice, setNotice] = useState<{
+    kind: "added" | "updated";
+    name: string;
+  } | null>(() => {
     const state = location.state as { addedHabit?: string } | null;
-    return state?.addedHabit ?? null;
+    return state?.addedHabit
+      ? { kind: "added", name: state.addedHabit }
+      : null;
   });
 
   useEffect(() => {
@@ -412,6 +438,43 @@ const Habits = () => {
     }
   };
 
+  const handleSaveHabit = async (input: NewHabitInput) => {
+    if (!editingHabit) {
+      return;
+    }
+
+    const token = getToken();
+
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    try {
+      const result = await updateHabit(token, editingHabit.id, input);
+
+      setHabits((current) =>
+        current.map((item) =>
+          item.id === result.habit.id
+            ? { ...result.habit, completions: item.completions }
+            : item,
+        ),
+      );
+      setEditingHabit(null);
+      setNotice({ kind: "updated", name: result.habit.name });
+    } catch (err) {
+      if (
+        err instanceof ApiError &&
+        (err.status === 401 || err.status === 403)
+      ) {
+        clearToken();
+        navigate("/login", { replace: true });
+      }
+
+      throw err;
+    }
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -478,19 +541,25 @@ const Habits = () => {
             </Link>
           </div>
 
-          {addedHabit && (
+          {notice && (
             <div
               role="status"
               className="mt-6 flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20"
             >
               <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span className="flex-1">
-                “{addedHabit}” was added. Click any square below to start
-                marking days.
+                {notice.kind === "added" ? (
+                  <>
+                    “{notice.name}” was added. Click any square below to start
+                    marking days.
+                  </>
+                ) : (
+                  <>“{notice.name}” was updated.</>
+                )}
               </span>
               <button
                 type="button"
-                onClick={() => setAddedHabit(null)}
+                onClick={() => setNotice(null)}
                 aria-label="Dismiss"
                 className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-emerald-700/70 transition hover:bg-emerald-100 hover:text-emerald-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 dark:text-emerald-200/70 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-100"
               >
@@ -541,12 +610,21 @@ const Habits = () => {
                   todayKey={graph.todayKey}
                   pending={pending}
                   onToggle={handleToggle}
+                  onEdit={setEditingHabit}
                 />
               ))}
             </div>
           )}
         </div>
       </main>
+
+      {editingHabit && (
+        <EditHabitModal
+          habit={editingHabit}
+          onClose={() => setEditingHabit(null)}
+          onSave={handleSaveHabit}
+        />
+      )}
     </div>
   );
 };

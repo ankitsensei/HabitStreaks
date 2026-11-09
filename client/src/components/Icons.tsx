@@ -234,6 +234,22 @@ export const CalendarIcon = (props: IconProps) => (
   </svg>
 );
 
+export const PencilIcon = (props: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M4 20h4L19.5 8.5a2.12 2.12 0 0 0-3-3L5 17v3Z" />
+    <path d="m13.5 6.5 4 4" />
+  </svg>
+);
+
 export const AlertIcon = (props: IconProps) => (
   <svg
     viewBox="0 0 24 24"

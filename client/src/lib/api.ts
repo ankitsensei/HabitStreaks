@@ -58,6 +58,21 @@ async function get<T>(path: string, token?: string): Promise<T> {
   });
 }
 
+async function patch<T>(
+  path: string,
+  body: unknown,
+  token?: string,
+): Promise<T> {
+  return request<T>(path, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 export interface RegisterResult {
   message: string;
 }
@@ -128,6 +143,17 @@ export interface AddHabitResult {
 
 export const addHabit = (token: string, habit: NewHabitInput) =>
   post<AddHabitResult>("/api/habits/newhabit", habit, token);
+
+export interface UpdateHabitResult {
+  message: string;
+  habit: Habit;
+}
+
+export const updateHabit = (
+  token: string,
+  habitId: number,
+  habit: NewHabitInput,
+) => patch<UpdateHabitResult>(`/api/habits/${habitId}`, habit, token);
 
 export interface HabitWithCompletions extends Habit {
   completions: string[];
