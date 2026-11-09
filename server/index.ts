@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import authRoutes from "./routes/auth.routes.ts";
+import habitRoutes from "./routes/habit.routes.ts";
 import verifyToken from "./middlewares/auth.middlewares.ts";
 
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/habits", verifyToken, habitRoutes);
 
 // Protected Route Example
 app.get("/api/protected", verifyToken, (req: Request, res: Response) => {
