@@ -7,6 +7,7 @@ import {
   FlameIcon,
   LogoutIcon,
   ShieldIcon,
+  SparkIcon,
 } from "../components/Icons";
 import { useAuth } from "../lib/auth";
 
@@ -121,6 +122,15 @@ const Home = () => {
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-2">
+              <Link
+                to="/newhabit"
+                aria-label="Add a new habit"
+                title="Add a new habit"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-600 to-fuchsia-600 px-3.5 py-2 text-[12.5px] font-semibold text-white shadow-md shadow-brand-600/25 transition hover:brightness-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-brand-500/40 sm:px-4"
+              >
+                <SparkIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">New habit</span>
+              </Link>
               <div className="flex items-center gap-2.5 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-[11px] font-bold text-white">
                   {initials}

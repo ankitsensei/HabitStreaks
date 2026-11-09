@@ -10,13 +10,20 @@ export class ApiError extends Error {
   }
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(
+  path: string,
+  body: unknown,
+  token?: string,
+): Promise<T> {
   let response: Response;
 
   try {
     response = await fetch(`${API_BASE}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(body),
     });
   } catch {
@@ -69,3 +76,44 @@ export const resendOtp = (email: string) =>
 
 export const loginUser = (email: string, password: string) =>
   post<LoginResult>("/api/auth/login", { email, password });
+
+export const HABIT_CATEGORIES = [
+  "Health & Fitness",
+  "Learning & Education",
+  "Productivity",
+  "Creativity",
+  "Mindfulness",
+  "Social",
+  "Finance",
+  "Other",
+] as const;
+
+export type HabitCategory = (typeof HABIT_CATEGORIES)[number];
+
+export interface NewHabitInput {
+  name: string;
+  icon: string;
+  color: string;
+  category: HabitCategory;
+  targetPerWeek: number;
+}
+
+export interface Habit {
+  id: number;
+  user_id: number;
+  name: string;
+  icon: string;
+  color: string;
+  category: HabitCategory;
+  target_per_week: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AddHabitResult {
+  message: string;
+  habit: Habit;
+}
+
+export const addHabit = (token: string, habit: NewHabitInput) =>
+  post<AddHabitResult>("/api/habits/newhabit", habit, token);
