@@ -222,6 +222,13 @@ const Home = () => {
                     <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
                       Welcome back. Your next streak starts today.
                     </p>
+                    <Link
+                      to="/habits"
+                      className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-brand-700 transition hover:text-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:text-brand-300 dark:hover:text-brand-200"
+                    >
+                      View my habits
+                      <ArrowRightIcon className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
                 </div>
               )}

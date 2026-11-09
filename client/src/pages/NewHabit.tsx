@@ -119,7 +119,6 @@ const NewHabit = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -130,7 +129,6 @@ const NewHabit = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
-    setSuccess(null);
 
     const trimmedName = name.trim();
 
@@ -162,8 +160,10 @@ const NewHabit = () => {
         targetPerWeek,
       });
 
-      setSuccess(result.message);
-      setName("");
+      navigate("/habits", {
+        replace: true,
+        state: { addedHabit: result.habit.name },
+      });
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         clearToken();
@@ -236,16 +236,6 @@ const NewHabit = () => {
               noValidate
               className="rounded-[26px] border border-white/80 bg-white/85 p-6 shadow-[0_30px_70px_-40px_rgba(76,29,149,0.45)] backdrop-blur-xl dark:border-white/10 dark:bg-[#111018]/85 sm:p-8"
             >
-              {success && (
-                <div
-                  role="status"
-                  className="mb-6 flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20"
-                >
-                  <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>{success}</span>
-                </div>
-              )}
-
               {error && (
                 <div
                   role="alert"

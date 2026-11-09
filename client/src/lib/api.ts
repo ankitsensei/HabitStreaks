@@ -10,22 +10,11 @@ export class ApiError extends Error {
   }
 }
 
-async function post<T>(
-  path: string,
-  body: unknown,
-  token?: string,
-): Promise<T> {
+async function request<T>(path: string, init: RequestInit): Promise<T> {
   let response: Response;
 
   try {
-    response = await fetch(`${API_BASE}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body),
-    });
+    response = await fetch(`${API_BASE}${path}`, init);
   } catch {
     throw new ApiError(
       "We couldn't reach the server. Check your connection and try again.",
@@ -45,6 +34,28 @@ async function post<T>(
   }
 
   return data as T;
+}
+
+async function post<T>(
+  path: string,
+  body: unknown,
+  token?: string,
+): Promise<T> {
+  return request<T>(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+async function get<T>(path: string, token?: string): Promise<T> {
+  return request<T>(path, {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
 }
 
 export interface RegisterResult {
@@ -117,3 +128,35 @@ export interface AddHabitResult {
 
 export const addHabit = (token: string, habit: NewHabitInput) =>
   post<AddHabitResult>("/api/habits/newhabit", habit, token);
+
+export interface HabitWithCompletions extends Habit {
+  completions: string[];
+}
+
+export interface HabitsResult {
+  habits: HabitWithCompletions[];
+  from: string;
+  to: string;
+}
+
+export interface ToggleCompletionResult {
+  completed: boolean;
+  date: string;
+}
+
+export const getHabits = (token: string, from: string, to: string) =>
+  get<HabitsResult>(
+    `/api/habits?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    token,
+  );
+
+export const toggleHabitCompletion = (
+  token: string,
+  habitId: number,
+  date: string,
+) =>
+  post<ToggleCompletionResult>(
+    `/api/habits/${habitId}/toggle`,
+    { date },
+    token,
+  );
