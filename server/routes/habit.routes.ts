@@ -254,6 +254,42 @@ router.post("/newhabit", async (req: Request, res: Response) => {
   }
 });
 
+// Delete a habit and its completions.
+router.delete("/:habitId", async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+
+  if (!userId) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  const habitId = Number(req.params.habitId);
+
+  if (!Number.isInteger(habitId) || habitId <= 0) {
+    return res.status(400).json({ error: "Invalid habit id." });
+  }
+
+  try {
+    const result = await db.query(
+      "DELETE FROM habits WHERE id = $1 AND user_id = $2 RETURNING id",
+      [habitId, userId],
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Habit not found." });
+    }
+
+    return res.json({
+      message: "Habit deleted successfully.",
+      habitId,
+    });
+  } catch (error) {
+    console.error("Failed to delete habit:", error);
+    return res
+      .status(500)
+      .json({ error: "Couldn't delete the habit. Please try again." });
+  }
+});
+
 // Update a habit's details.
 router.patch("/:habitId", async (req: Request, res: Response) => {
   const userId = getUserId(req);
