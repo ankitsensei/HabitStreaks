@@ -73,6 +73,13 @@ async function patch<T>(
   });
 }
 
+async function del<T>(path: string, token?: string): Promise<T> {
+  return request<T>(path, {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
 export interface RegisterResult {
   message: string;
 }
@@ -154,6 +161,14 @@ export const updateHabit = (
   habitId: number,
   habit: NewHabitInput,
 ) => patch<UpdateHabitResult>(`/api/habits/${habitId}`, habit, token);
+
+export interface DeleteHabitResult {
+  message: string;
+  habitId: number;
+}
+
+export const deleteHabit = (token: string, habitId: number) =>
+  del<DeleteHabitResult>(`/api/habits/${habitId}`, token);
 
 export interface HabitWithCompletions extends Habit {
   completions: string[];

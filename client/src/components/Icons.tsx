@@ -266,6 +266,24 @@ export const SlidersIcon = (props: IconProps) => (
   </svg>
 );
 
+export const TrashIcon = (props: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M4 7h16" />
+    <path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7" />
+    <path d="m6.5 7 .8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9l.8-12" />
+    <path d="M10 11v6M14 11v6" />
+  </svg>
+);
+
 export const AlertIcon = (props: IconProps) => (
   <svg
     viewBox="0 0 24 24"
