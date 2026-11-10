@@ -177,7 +177,7 @@ router.get("/", async (req: Request, res: Response) => {
       `SELECT id, user_id, name, icon, color, category, target_per_week, created_at, updated_at
        FROM habits
        WHERE user_id = $1
-       ORDER BY created_at DESC, id DESC`,
+       ORDER BY sort_order ASC, id ASC`,
       [userId],
     );
 
@@ -236,8 +236,11 @@ router.post("/newhabit", async (req: Request, res: Response) => {
 
   try {
     const result = await db.query(
-      `INSERT INTO habits (user_id, name, icon, color, category, target_per_week)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO habits (user_id, name, icon, color, category, target_per_week, sort_order)
+       VALUES (
+         $1, $2, $3, $4, $5, $6,
+         COALESCE((SELECT MIN(sort_order) - 1 FROM habits WHERE user_id = $1), 0)
+       )
        RETURNING id, user_id, name, icon, color, category, target_per_week, created_at, updated_at`,
       [userId, name, icon, color, category, targetPerWeek],
     );
@@ -251,6 +254,70 @@ router.post("/newhabit", async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ error: "Couldn't add the habit. Please try again." });
+  }
+});
+
+// Persist the display order of the signed-in user's habits.
+router.put("/order", async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+
+  if (!userId) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  const habitIds = req.body?.habitIds;
+
+  if (
+    !Array.isArray(habitIds) ||
+    habitIds.length === 0 ||
+    habitIds.some((id) => !Number.isInteger(id) || id <= 0)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Provide a valid list of habit ids." });
+  }
+
+  if (new Set(habitIds).size !== habitIds.length) {
+    return res
+      .status(400)
+      .json({ error: "Habit ids must not contain duplicates." });
+  }
+
+  try {
+    const existing = await db.query(
+      "SELECT id FROM habits WHERE user_id = $1",
+      [userId],
+    );
+
+    const existingIds = new Set(existing.rows.map((row) => row.id));
+
+    if (
+      existingIds.size !== habitIds.length ||
+      habitIds.some((id) => !existingIds.has(id))
+    ) {
+      return res.status(400).json({
+        error: "Habit order must include exactly all of your habits.",
+      });
+    }
+
+    await db.query(
+      `UPDATE habits AS h
+       SET sort_order = ordered.position,
+           updated_at = CURRENT_TIMESTAMP
+       FROM (
+         SELECT id, ordinality - 1 AS position
+         FROM unnest($1::int[]) WITH ORDINALITY AS t(id, ordinality)
+       ) AS ordered
+       WHERE h.id = ordered.id AND h.user_id = $2`,
+      [habitIds, userId],
+    );
+
+    return res.json({ message: "Habit order updated." });
+  } catch (error) {
+    console.error("Failed to update habit order:", error);
+    return res
+      .status(500)
+      .json({ error: "Couldn't save the new order. Please try again." });
   }
 });
 

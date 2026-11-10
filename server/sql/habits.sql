@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS habits (
   color VARCHAR(20) NOT NULL,
   category VARCHAR(50) NOT NULL,
   target_per_week SMALLINT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT habits_target_per_week_check
@@ -14,3 +15,4 @@ CREATE TABLE IF NOT EXISTS habits (
 );
 
 CREATE INDEX IF NOT EXISTS habits_user_id_idx ON habits (user_id);
+CREATE INDEX IF NOT EXISTS habits_user_sort_order_idx ON habits (user_id, sort_order);

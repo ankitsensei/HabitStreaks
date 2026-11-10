@@ -80,6 +80,21 @@ async function del<T>(path: string, token?: string): Promise<T> {
   });
 }
 
+async function put<T>(
+  path: string,
+  body: unknown,
+  token?: string,
+): Promise<T> {
+  return request<T>(path, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 export interface RegisterResult {
   message: string;
 }
@@ -169,6 +184,13 @@ export interface DeleteHabitResult {
 
 export const deleteHabit = (token: string, habitId: number) =>
   del<DeleteHabitResult>(`/api/habits/${habitId}`, token);
+
+export interface ReorderHabitsResult {
+  message: string;
+}
+
+export const reorderHabits = (token: string, habitIds: number[]) =>
+  put<ReorderHabitsResult>("/api/habits/order", { habitIds }, token);
 
 export interface HabitWithCompletions extends Habit {
   completions: string[];

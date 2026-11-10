@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   AlertIcon,
   ArrowRightIcon,
   CheckIcon,
+  GripIcon,
   PencilIcon,
   SlidersIcon,
   SparkIcon,
@@ -16,6 +17,7 @@ import {
   ApiError,
   deleteHabit,
   getHabits,
+  reorderHabits,
   updateHabit,
 } from "../lib/api";
 import type { HabitWithCompletions, NewHabitInput } from "../lib/api";
@@ -47,6 +49,9 @@ const Manage = () => {
     useState<HabitWithCompletions | null>(null);
   const [deletingHabit, setDeletingHabit] =
     useState<HabitWithCompletions | null>(null);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const dragStartHabitsRef = useRef<HabitWithCompletions[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -178,6 +183,107 @@ const Manage = () => {
     }
   };
 
+  const resetDragState = () => {
+    dragStartHabitsRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+  };
+
+  const saveOrder = async (
+    next: HabitWithCompletions[],
+    previous: HabitWithCompletions[],
+  ) => {
+    const token = getToken();
+
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    try {
+      await reorderHabits(
+        token,
+        next.map((habit) => habit.id),
+      );
+      setNotice("Habit order updated.");
+    } catch (err) {
+      setHabits(previous);
+
+      if (
+        err instanceof ApiError &&
+        (err.status === 401 || err.status === 403)
+      ) {
+        clearToken();
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't save the new habit order. Please try again.",
+      );
+    }
+  };
+
+  const handleDragStart = (
+    event: DragEvent<HTMLElement>,
+    habit: HabitWithCompletions,
+  ) => {
+    dragStartHabitsRef.current = habits;
+    setDraggingId(habit.id);
+    setDragOverId(habit.id);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(habit.id));
+
+    const row = event.currentTarget.closest("article");
+
+    if (row) {
+      event.dataTransfer.setDragImage(row, 24, 24);
+    }
+  };
+
+  const handleDragOver = (
+    event: DragEvent<HTMLElement>,
+    habitId: number,
+  ) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDragOverId((current) => (current === habitId ? current : habitId));
+  };
+
+  const handleDrop = (event: DragEvent<HTMLElement>, targetId: number) => {
+    event.preventDefault();
+
+    const rawId = event.dataTransfer.getData("text/plain");
+    const draggedId = draggingId ?? Number(rawId);
+    const previous = dragStartHabitsRef.current ?? habits;
+
+    resetDragState();
+
+    if (
+      !Number.isInteger(draggedId) ||
+      draggedId <= 0 ||
+      draggedId === targetId
+    ) {
+      return;
+    }
+
+    const fromIndex = habits.findIndex((habit) => habit.id === draggedId);
+    const toIndex = habits.findIndex((habit) => habit.id === targetId);
+
+    if (fromIndex === -1 || toIndex === -1) {
+      return;
+    }
+
+    const next = [...habits];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+
+    setHabits(next);
+    void saveOrder(next, previous);
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -202,8 +308,8 @@ const Manage = () => {
             Manage your habits
           </h1>
           <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-slate-600 dark:text-slate-400">
-            Edit or delete any habit from one place. Drag-to-reorder is coming
-            next.
+            Drag habits into the order you want — it carries over to your
+            Calendar. You can also edit or delete any habit.
           </p>
 
           {notice && (
@@ -264,8 +370,25 @@ const Manage = () => {
               {habits.map((habit) => (
                 <article
                   key={habit.id}
-                  className="flex items-center gap-4 rounded-[20px] border border-slate-200 bg-white/85 p-4 shadow-sm backdrop-blur transition hover:border-brand-200 hover:shadow-md dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-brand-400/30 sm:p-5"
+                  onDragOver={(event) => handleDragOver(event, habit.id)}
+                  onDrop={(event) => handleDrop(event, habit.id)}
+                  className={`flex items-center gap-3 rounded-[20px] border bg-white/85 p-4 shadow-sm backdrop-blur transition dark:bg-white/[0.03] sm:gap-4 sm:p-5 ${
+                    dragOverId === habit.id && draggingId !== habit.id
+                      ? "border-brand-300 ring-2 ring-brand-200 dark:border-brand-400/50 dark:ring-brand-500/20"
+                      : "border-slate-200 hover:border-brand-200 hover:shadow-md dark:border-white/10 dark:hover:border-brand-400/30"
+                  } ${draggingId === habit.id ? "opacity-50" : ""}`}
                 >
+                  <span
+                    draggable
+                    onDragStart={(event) => handleDragStart(event, habit)}
+                    onDragEnd={resetDragState}
+                    title="Drag to reorder"
+                    aria-label={`Reorder ${habit.name}`}
+                    className="grid h-8 w-6 shrink-0 cursor-grab place-items-center rounded-md text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing dark:text-slate-600 dark:hover:bg-white/10 dark:hover:text-slate-300"
+                  >
+                    <GripIcon className="h-4 w-4" />
+                  </span>
+
                   <span
                     aria-hidden="true"
                     className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-[22px]"
