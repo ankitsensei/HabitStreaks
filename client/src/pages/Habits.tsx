@@ -4,12 +4,11 @@ import {
   AlertIcon,
   ArrowRightIcon,
   CheckIcon,
-  FlameIcon,
-  LogoutIcon,
   PencilIcon,
   SparkIcon,
 } from "../components/Icons";
 import EditHabitModal from "../components/EditHabitModal";
+import Navbar from "../components/Navbar";
 import {
   ApiError,
   getHabits,
@@ -270,7 +269,7 @@ const HabitCard = ({
 const Habits = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const graph = useMemo(() => {
     const { start, today } = getGraphRange();
@@ -481,36 +480,7 @@ const Habits = () => {
 
   return (
     <div className="min-h-svh bg-[#f6f4fb] text-slate-900 dark:bg-[#0a0910] dark:text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-[#f6f4fb]/85 backdrop-blur-xl dark:border-white/10 dark:bg-[#0a0910]/85">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-5">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30">
-              <FlameIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="text-[16px] font-bold tracking-tight">
-              HabitStreaks
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <Link
-              to="/"
-              className="rounded-lg px-3 py-2 text-[13px] font-semibold text-slate-600 transition hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-white/10"
-            >
-              Home
-            </Link>
-            <button
-              type="button"
-              onClick={signOut}
-              aria-label="Sign out"
-              title="Sign out"
-              className="grid h-9 w-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 dark:hover:border-rose-500/30 dark:hover:bg-rose-500/10 dark:hover:text-rose-300 dark:focus-visible:ring-rose-500/20"
-            >
-              <LogoutIcon className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">

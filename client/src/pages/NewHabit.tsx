@@ -2,12 +2,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   AlertIcon,
-  ArrowLeftIcon,
   ArrowRightIcon,
   CheckIcon,
-  FlameIcon,
   SparkIcon,
 } from "../components/Icons";
+import Navbar from "../components/Navbar";
 import { ApiError, addHabit, HABIT_CATEGORIES } from "../lib/api";
 import type { HabitCategory } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
@@ -119,26 +118,7 @@ const NewHabit = () => {
 
   return (
     <div className="min-h-svh bg-[#f6f4fb] text-slate-900 dark:bg-[#0a0910] dark:text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-[#f6f4fb]/85 backdrop-blur-xl dark:border-white/10 dark:bg-[#0a0910]/85">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-5">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30">
-              <FlameIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="text-[16px] font-bold tracking-tight">
-              HabitStreaks
-            </span>
-          </Link>
-
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-semibold text-slate-600 transition hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-white/10"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Back to home
-          </Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
