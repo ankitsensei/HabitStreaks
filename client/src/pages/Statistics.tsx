@@ -143,7 +143,7 @@ interface SegmentedControlProps {
 }
 
 const SegmentedControl = ({ value, onChange }: SegmentedControlProps) => (
-  <div className="flex w-full rounded-[9px] bg-[#e9e9eb] p-[2px] dark:bg-[#3a3a3c] sm:w-auto">
+  <div className="flex w-full rounded-full border border-white/[0.08] bg-white/[0.06] p-1 sm:w-auto">
     {PERIODS.map((item) => {
       const isActive = item.id === value;
 
@@ -153,10 +153,10 @@ const SegmentedControl = ({ value, onChange }: SegmentedControlProps) => (
           type="button"
           onClick={() => onChange(item.id)}
           aria-pressed={isActive}
-          className={`flex-1 rounded-[7px] px-2 py-1.5 text-[11.5px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/50 sm:flex-none sm:px-3 ${
+          className={`flex-1 rounded-full px-2.5 py-1.5 text-[12px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 sm:flex-none sm:px-3.5 ${
             isActive
-              ? "bg-white text-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-[#636366] dark:text-white"
-              : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              ? "bg-white/[0.14] text-white"
+              : "text-[rgba(235,235,245,0.6)] hover:bg-white/[0.08] hover:text-white"
           }`}
         >
           {item.label}
@@ -182,19 +182,19 @@ const RangeNavigator = ({
   onNext,
 }: RangeNavigatorProps) => (
   <div className="flex justify-center">
-    <div className="inline-flex max-w-full items-center gap-0.5 rounded-[10px] border border-slate-200/80 px-1 py-0 dark:border-white/10">
+    <div className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-white/[0.08] bg-white/[0.06] px-1 py-1">
       <button
         type="button"
         onClick={onPrevious}
         aria-label={`Previous ${periodLabel}`}
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px] text-[#007AFF] transition hover:bg-[#f2f2f7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40 dark:text-[#0A84FF] dark:hover:bg-white/10"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[#0A84FF] transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
       >
-        <ChevronLeftIcon className="h-[18px] w-[18px]" />
+        <ChevronLeftIcon className="h-4 w-4" />
       </button>
 
       <p
         aria-live="polite"
-        className="whitespace-nowrap px-2 text-center text-[12px] font-medium text-slate-600 dark:text-slate-300"
+        className="whitespace-nowrap px-1.5 text-center text-[12px] font-medium text-[rgba(235,235,245,0.75)]"
       >
         {label}
       </p>
@@ -204,9 +204,9 @@ const RangeNavigator = ({
         onClick={onNext}
         disabled={isAtCurrent}
         aria-label={`Next ${periodLabel}`}
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px] text-[#007AFF] transition hover:bg-[#f2f2f7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent dark:text-[#0A84FF] dark:hover:bg-white/10 dark:disabled:text-slate-600 dark:disabled:hover:bg-transparent"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[#0A84FF] transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50 disabled:cursor-not-allowed disabled:text-[rgba(235,235,245,0.25)] disabled:hover:bg-transparent"
       >
-        <ChevronRightIcon className="h-[18px] w-[18px]" />
+        <ChevronRightIcon className="h-4 w-4" />
       </button>
     </div>
   </div>
@@ -237,7 +237,7 @@ const PeriodChart = ({
 
   return (
     <div className="flex gap-2.5">
-      <div className="flex h-44 w-6 shrink-0 flex-col justify-between text-right text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">
+      <div className="flex h-44 w-6 shrink-0 flex-col justify-between text-right text-[9px] font-medium leading-none text-[rgba(235,235,245,0.4)]">
         {ticks.map((tick) => (
           <span key={tick}>{tick}</span>
         ))}
@@ -248,14 +248,14 @@ const PeriodChart = ({
           {[0, 25, 50, 75, 100].map((percent) => (
             <div
               key={percent}
-              className="absolute inset-x-0 border-t border-slate-200/80 dark:border-white/[0.07]"
+              className="absolute inset-x-0 border-t border-white/[0.07]"
               style={{ top: `${percent}%` }}
             />
           ))}
 
           {average > 0 && (
             <div
-              className="absolute inset-x-0 z-10 border-t border-dashed border-slate-400/80 dark:border-slate-500/80"
+              className="absolute inset-x-0 z-10 border-t border-dashed border-[rgba(235,235,245,0.3)]"
               style={{ bottom: `${averagePercent}%` }}
             />
           )}
@@ -275,7 +275,7 @@ const PeriodChart = ({
                       className={`w-full rounded-t-[3px] ${
                         bucket.isFuture
                           ? "bg-transparent"
-                          : "bg-slate-200/70 dark:bg-white/[0.08]"
+                          : "bg-white/[0.08]"
                       }`}
                       style={{ height: "2%" }}
                     />
@@ -311,8 +311,8 @@ const PeriodChart = ({
               key={bucket.key}
               className={`flex-1 text-center text-[9px] ${
                 bucket.isToday
-                  ? "font-semibold text-slate-900 dark:text-white"
-                  : "font-medium text-slate-400 dark:text-slate-500"
+                  ? "font-semibold text-[#f5f5f7]"
+                  : "font-medium text-[rgba(235,235,245,0.4)]"
               }`}
             >
               {dense && index > 0 && (index + 1) % 5 !== 0 ? "" : bucket.label}
@@ -365,8 +365,8 @@ const DayChart = ({
                   isDone
                     ? ""
                     : wasTracked
-                      ? "bg-slate-200/70 dark:bg-white/[0.08]"
-                      : "bg-slate-100/80 dark:bg-white/[0.04]"
+                      ? "bg-white/[0.08]"
+                      : "bg-white/[0.04]"
                 }`}
                 style={{
                   height: isDone ? "100%" : wasTracked ? "4%" : "2%",
@@ -397,15 +397,15 @@ interface StatTileProps {
 }
 
 const StatTile = ({ icon, label, value, sub }: StatTileProps) => (
-  <article className="rounded-[14px] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e]">
-    <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+  <article className="rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-4 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+    <div className="flex items-center gap-1.5 text-[rgba(235,235,245,0.4)]">
       {icon}
       <span className="text-[11px] font-medium">{label}</span>
     </div>
-    <p className="mt-2 text-[22px] font-semibold leading-none tracking-tight text-slate-900 dark:text-white">
+    <p className="mt-2 text-[22px] font-semibold leading-none tracking-tight text-[#f5f5f7]">
       {value}
     </p>
-    <p className="mt-1.5 text-[10.5px] text-slate-400 dark:text-slate-500">
+    <p className="mt-1.5 text-[10.5px] text-[rgba(235,235,245,0.4)]">
       {sub}
     </p>
   </article>
@@ -413,7 +413,7 @@ const StatTile = ({ icon, label, value, sub }: StatTileProps) => (
 
 const ChartSkeleton = () => (
   <div className="mt-4 flex h-52 items-center justify-center">
-    <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-[#007AFF] dark:border-white/20 dark:border-t-[#0A84FF]" />
+    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-[#0A84FF]" />
   </div>
 );
 
@@ -423,20 +423,20 @@ const ContentSkeleton = () => (
       {[0, 1, 2, 3].map((index) => (
         <div
           key={index}
-          className="h-[106px] animate-pulse rounded-[14px] bg-white/70 dark:bg-white/[0.06]"
+          className="h-[106px] animate-pulse rounded-[16px] border border-white/[0.08] bg-[#1c1c1e]"
         />
       ))}
     </div>
 
-    <section className="mt-4 rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e] sm:p-6">
-      <div className="h-4 w-36 animate-pulse rounded bg-slate-200 dark:bg-white/10" />
+    <section className="mt-4 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-6">
+      <div className="h-4 w-36 animate-pulse rounded bg-white/[0.08]" />
       <div className="mt-5 space-y-4">
         {[0, 1, 2].map((index) => (
           <div key={index} className="flex items-center gap-3">
-            <div className="h-9 w-9 animate-pulse rounded-[9px] bg-slate-200 dark:bg-white/10" />
+            <div className="h-9 w-9 animate-pulse rounded-[9px] bg-white/[0.08]" />
             <div className="flex-1 space-y-2">
-              <div className="h-3 w-1/3 animate-pulse rounded bg-slate-200 dark:bg-white/10" />
-              <div className="h-2 w-1/4 animate-pulse rounded bg-slate-100 dark:bg-white/[0.06]" />
+              <div className="h-3 w-1/3 animate-pulse rounded bg-white/[0.08]" />
+              <div className="h-2 w-1/4 animate-pulse rounded bg-white/[0.05]" />
             </div>
           </div>
         ))}
@@ -451,20 +451,20 @@ interface InitialErrorProps {
 }
 
 const InitialError = ({ message, onRetry }: InitialErrorProps) => (
-  <div className="mt-6 rounded-[16px] bg-white px-6 py-12 text-center shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e]">
-    <span className="mx-auto grid h-12 w-12 place-items-center rounded-[12px] bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-300">
+  <div className="mt-6 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-12 text-center shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+    <span className="mx-auto grid h-12 w-12 place-items-center rounded-[12px] bg-[#FF453A]/10 text-[#FF453A]">
       <AlertIcon className="h-6 w-6" />
     </span>
-    <h2 className="mt-4 text-[17px] font-semibold text-slate-900 dark:text-white">
+    <h2 className="mt-4 text-[17px] font-semibold text-[#f5f5f7]">
       Couldn't load your statistics
     </h2>
-    <p className="mx-auto mt-1.5 max-w-sm text-[12.5px] leading-relaxed text-slate-500 dark:text-slate-400">
+    <p className="mx-auto mt-1.5 max-w-sm text-[12.5px] leading-relaxed text-[rgba(235,235,245,0.55)]">
       {message ?? "Something went wrong. Please try again."}
     </p>
     <button
       type="button"
       onClick={onRetry}
-      className="mt-5 inline-flex items-center gap-2 rounded-[10px] bg-[#007AFF] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#0069d9] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#007AFF]/30 dark:bg-[#0A84FF] dark:hover:bg-[#3395ff]"
+      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
     >
       Try again
     </button>
@@ -543,19 +543,19 @@ const OverallSection = ({ overall, habitCount }: OverallSectionProps) => {
   ];
 
   return (
-    <section className="mt-4 rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e] sm:p-6">
+    <section className="mt-4 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-[16px] font-semibold text-[#f5f5f7]">
             Overall
           </h2>
-          <p className="mt-0.5 text-[11.5px] text-slate-400 dark:text-slate-500">
+          <p className="mt-0.5 text-[11.5px] text-[rgba(235,235,245,0.4)]">
             Lifetime stats across {habitCount}{" "}
             {pluralize(habitCount, "habit", "habits")}
           </p>
         </div>
 
-        <span className="rounded-full bg-[#f2f2f7] px-2.5 py-1 text-[10.5px] font-medium text-slate-500 dark:bg-white/[0.08] dark:text-slate-400">
+        <span className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[10.5px] font-medium text-[rgba(235,235,245,0.65)]">
           Since {since}
         </span>
       </div>
@@ -564,15 +564,15 @@ const OverallSection = ({ overall, habitCount }: OverallSectionProps) => {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="rounded-[12px] bg-[#f2f2f7] p-3 dark:bg-white/[0.06]"
+            className="rounded-[12px] border border-white/[0.06] bg-white/[0.05] p-3"
           >
-            <p className="text-[10.5px] font-medium text-slate-400 dark:text-slate-500">
+            <p className="text-[10.5px] font-medium text-[rgba(235,235,245,0.4)]">
               {stat.label}
             </p>
-            <p className="mt-1.5 text-[20px] font-semibold leading-none tracking-tight text-slate-900 dark:text-white">
+            <p className="mt-1.5 text-[20px] font-semibold leading-none tracking-tight text-[#f5f5f7]">
               {stat.value}
             </p>
-            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="mt-1 text-[10px] text-[rgba(235,235,245,0.4)]">
               {stat.sub}
             </p>
           </div>
@@ -583,14 +583,14 @@ const OverallSection = ({ overall, habitCount }: OverallSectionProps) => {
 };
 
 const OverallSkeleton = () => (
-  <section className="mt-4 rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e] sm:p-6">
-    <div className="h-4 w-24 animate-pulse rounded bg-slate-200 dark:bg-white/10" />
-    <div className="mt-2 h-2.5 w-48 animate-pulse rounded bg-slate-100 dark:bg-white/[0.06]" />
+  <section className="mt-4 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-6">
+    <div className="h-4 w-24 animate-pulse rounded bg-white/[0.08]" />
+    <div className="mt-2 h-2.5 w-48 animate-pulse rounded bg-white/[0.05]" />
     <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
       {[0, 1, 2, 3, 4, 5].map((index) => (
         <div
           key={index}
-          className="h-[76px] animate-pulse rounded-[12px] bg-[#f2f2f7] dark:bg-white/[0.06]"
+          className="h-[76px] animate-pulse rounded-[12px] bg-white/[0.05]"
         />
       ))}
     </div>
@@ -603,20 +603,20 @@ interface OverallErrorProps {
 }
 
 const OverallError = ({ message, onRetry }: OverallErrorProps) => (
-  <section className="mt-4 rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e] sm:p-6">
+  <section className="mt-4 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-6">
     <div className="flex items-center gap-1.5">
-      <AlertIcon className="h-4 w-4 text-rose-500 dark:text-rose-300" />
-      <h2 className="text-[16px] font-semibold text-slate-900 dark:text-white">
+      <AlertIcon className="h-4 w-4 text-[#FF453A]" />
+      <h2 className="text-[16px] font-semibold text-[#f5f5f7]">
         Overall
       </h2>
     </div>
-    <p className="mt-1.5 text-[12px] text-slate-500 dark:text-slate-400">
+    <p className="mt-1.5 text-[12px] text-[rgba(235,235,245,0.55)]">
       {message ?? "Couldn't load your all-time stats. Please try again."}
     </p>
     <button
       type="button"
       onClick={onRetry}
-      className="mt-3 text-[12.5px] font-medium text-[#007AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40 dark:text-[#0A84FF]"
+      className="mt-3 text-[12.5px] font-medium text-[#409AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
     >
       Try again
     </button>
@@ -994,37 +994,37 @@ const Statistics = () => {
 
       <main className="mx-auto w-full max-w-4xl px-5 py-10 sm:py-12">
         <header>
-          <h1 className="text-[28px] font-bold tracking-tight text-slate-900 dark:text-white sm:text-[32px]">
+          <h1 className="text-[28px] font-bold tracking-tight text-[#f5f5f7] sm:text-[32px]">
             Statistics
           </h1>
-          <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+          <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[rgba(235,235,245,0.55)]">
             Compare days, weeks, months, and years at a glance — plus all-time
             stats across every habit.
           </p>
         </header>
 
         {!hasLoaded && !error ? (
-          <div className="mt-6 flex items-center justify-center gap-3 rounded-[16px] bg-white px-6 py-16 text-[13px] font-medium text-slate-500 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e] dark:text-slate-400">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-[#007AFF] dark:border-white/20 dark:border-t-[#0A84FF]" />
+          <div className="mt-6 flex items-center justify-center gap-3 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-16 text-[13px] font-medium text-[rgba(235,235,245,0.6)] shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-[#0A84FF]" />
             Loading your activity…
           </div>
         ) : !hasLoaded ? (
           <InitialError message={error} onRetry={handleRetry} />
         ) : habits.length === 0 ? (
-          <div className="mt-6 rounded-[16px] bg-white px-6 py-16 text-center shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e]">
-            <span className="mx-auto grid h-12 w-12 place-items-center rounded-[12px] bg-[#007AFF]/10 text-[#007AFF] dark:bg-[#0A84FF]/15 dark:text-[#0A84FF]">
+          <div className="mt-6 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-16 text-center shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+            <span className="mx-auto grid h-12 w-12 place-items-center rounded-[12px] bg-[#0A84FF]/10 text-[#409AFF] ring-1 ring-[#0A84FF]/20">
               <ChartIcon className="h-6 w-6" />
             </span>
-            <h2 className="mt-4 text-[17px] font-semibold text-slate-900 dark:text-white">
+            <h2 className="mt-4 text-[17px] font-semibold text-[#f5f5f7]">
               Nothing to chart yet
             </h2>
-            <p className="mx-auto mt-1.5 max-w-sm text-[12.5px] leading-relaxed text-slate-500 dark:text-slate-400">
+            <p className="mx-auto mt-1.5 max-w-sm text-[12.5px] leading-relaxed text-[rgba(235,235,245,0.55)]">
               Create your first habit and your daily, weekly, monthly, and
               yearly activity will show up here.
             </p>
             <Link
               to="/newhabit"
-              className="mt-5 inline-flex items-center gap-2 rounded-[10px] bg-[#007AFF] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#0069d9] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#007AFF]/30 dark:bg-[#0A84FF] dark:hover:bg-[#3395ff]"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
             >
               <SparkIcon className="h-4 w-4" />
               Create your first habit
@@ -1035,27 +1035,27 @@ const Statistics = () => {
             {error && (
               <div
                 role="alert"
-                className="mt-6 flex items-start gap-2.5 rounded-[14px] bg-rose-50 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20"
+                className="mt-6 flex items-start gap-2.5 rounded-[14px] bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
               >
                 <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
                 <span className="flex-1">{error}</span>
                 <button
                   type="button"
                   onClick={handleRetry}
-                  className="shrink-0 font-semibold underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50"
+                  className="shrink-0 font-semibold text-[#FF6961] underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF453A]/50"
                 >
                   Retry
                 </button>
               </div>
             )}
 
-            <section className="mt-6 rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] dark:bg-[#2c2c2e] sm:p-6">
+            <section className="mt-6 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-[16px] font-semibold text-slate-900 dark:text-white">
+                  <h2 className="text-[16px] font-semibold text-[#f5f5f7]">
                     Habit Activity
                   </h2>
-                  <p className="mt-0.5 text-[11.5px] text-slate-400 dark:text-slate-500">
+                  <p className="mt-0.5 text-[11.5px] text-[rgba(235,235,245,0.4)]">
                     {chartSubtitle}
                   </p>
                 </div>
@@ -1081,7 +1081,7 @@ const Statistics = () => {
                     {habits.map((habit) => (
                       <span
                         key={habit.id}
-                        className="inline-flex items-center gap-1.5 text-[10.5px] font-medium text-slate-500 dark:text-slate-400"
+                        className="inline-flex items-center gap-1.5 text-[10.5px] font-medium text-[rgba(235,235,245,0.55)]"
                       >
                         <span
                           className="h-2 w-2 rounded-full"
@@ -1102,7 +1102,7 @@ const Statistics = () => {
                           trackedHabitIds={trackedHabitIds}
                         />
                         {trackedHabitCount < habits.length && (
-                          <p className="mt-2 text-[10.5px] font-medium text-slate-400 dark:text-slate-500">
+                          <p className="mt-2 text-[10.5px] font-medium text-[rgba(235,235,245,0.4)]">
                             {habits.length - trackedHabitCount}{" "}
                             {pluralize(
                               habits.length - trackedHabitCount,
@@ -1125,24 +1125,24 @@ const Statistics = () => {
                     )}
                   </div>
 
-                  <div className="mt-5 flex items-end justify-between gap-4 border-t border-slate-100 pt-4 dark:border-white/[0.06]">
+                  <div className="mt-5 flex items-end justify-between gap-4 border-t border-white/[0.06] pt-4">
                     <div>
-                      <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                      <p className="text-[11px] font-medium text-[rgba(235,235,245,0.4)]">
                         {footerLabel}
                       </p>
-                      <p className="mt-1 text-[28px] font-semibold leading-none tracking-tight text-slate-900 dark:text-white">
+                      <p className="mt-1 text-[28px] font-semibold leading-none tracking-tight text-[#f5f5f7]">
                         {footerValue}
-                        <span className="ml-1.5 text-[12px] font-medium text-slate-400 dark:text-slate-500">
+                        <span className="ml-1.5 text-[12px] font-medium text-[rgba(235,235,245,0.4)]">
                           {footerUnit}
                         </span>
                       </p>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                      <p className="text-[11px] font-medium text-[rgba(235,235,245,0.4)]">
                         {period === "day" ? "Completion" : "Total"}
                       </p>
-                      <p className="mt-1 text-[15px] font-semibold text-slate-900 dark:text-white">
+                      <p className="mt-1 text-[15px] font-semibold text-[#f5f5f7]">
                         {period === "day"
                           ? completionPercent === null
                             ? "—"
@@ -1157,15 +1157,15 @@ const Statistics = () => {
                   </div>
                 </>
               ) : error ? (
-                <div className="mt-4 flex h-52 flex-col items-center justify-center gap-2 rounded-[12px] bg-[#f2f2f7] text-center dark:bg-white/[0.04]">
-                  <AlertIcon className="h-5 w-5 text-rose-500 dark:text-rose-300" />
-                  <p className="text-[12.5px] text-slate-500 dark:text-slate-400">
+                <div className="mt-4 flex h-52 flex-col items-center justify-center gap-2 rounded-[12px] bg-white/[0.04] text-center">
+                  <AlertIcon className="h-5 w-5 text-[#FF453A]" />
+                  <p className="text-[12.5px] text-[rgba(235,235,245,0.55)]">
                     Couldn't load this period.
                   </p>
                   <button
                     type="button"
                     onClick={handleRetry}
-                    className="text-[12.5px] font-medium text-[#007AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40 dark:text-[#0A84FF]"
+                    className="text-[12.5px] font-medium text-[#409AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
                   >
                     Try again
                   </button>
@@ -1183,13 +1183,13 @@ const Statistics = () => {
                   ))}
                 </div>
 
-                <section className="mt-4 rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:bg-[#2c2c2e] sm:p-6">
+                <section className="mt-4 rounded-[16px] border border-white/[0.08] bg-[#1c1c1e] p-5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-[16px] font-semibold text-slate-900 dark:text-white">
+                      <h2 className="text-[16px] font-semibold text-[#f5f5f7]">
                         Most Checked-In
                       </h2>
-                      <p className="mt-0.5 text-[11.5px] text-slate-400 dark:text-slate-500">
+                      <p className="mt-0.5 text-[11.5px] text-[rgba(235,235,245,0.4)]">
                         Ranked by check-ins · {scopeLabel}
                       </p>
                     </div>
@@ -1198,7 +1198,7 @@ const Statistics = () => {
                       <button
                         type="button"
                         onClick={() => setShowAll((current) => !current)}
-                        className="shrink-0 text-[12.5px] font-medium text-[#007AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40 dark:text-[#0A84FF]"
+                        className="shrink-0 text-[12.5px] font-medium text-[#409AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
                       >
                         {showAll ? "Show less" : "Show all"}
                       </button>
@@ -1206,7 +1206,7 @@ const Statistics = () => {
                   </div>
 
                   {summary.total === 0 && period !== "day" ? (
-                    <p className="mt-6 text-center text-[12.5px] text-slate-400 dark:text-slate-500">
+                    <p className="mt-6 text-center text-[12.5px] text-[rgba(235,235,245,0.4)]">
                       No check-ins for {scopeLabel}.
                     </p>
                   ) : (
@@ -1237,20 +1237,20 @@ const Statistics = () => {
                               </span>
 
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-[13.5px] font-medium text-slate-900 dark:text-white">
+                                <p className="truncate text-[13.5px] font-medium text-[#f5f5f7]">
                                   {habit.name}
                                 </p>
-                                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                <p className="text-[11px] text-[rgba(235,235,245,0.4)]">
                                   {habit.category}
                                 </p>
                               </div>
 
-                              <span className="shrink-0 text-[12px] font-medium text-slate-500 dark:text-slate-400">
+                              <span className="shrink-0 text-[12px] font-medium text-[rgba(235,235,245,0.55)]">
                                 {countLabel}
                               </span>
                             </div>
 
-                            <div className="ml-12 mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/[0.08]">
+                            <div className="ml-12 mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
                               <div
                                 className="h-full rounded-full"
                                 style={{
@@ -1284,7 +1284,7 @@ const Statistics = () => {
             <div className="mt-8 text-center">
               <Link
                 to="/habits"
-                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#007AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF]/40 dark:text-[#0A84FF]"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#409AFF] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
               >
                 <CalendarIcon className="h-4 w-4" />
                 Open the Calendar to mark today
