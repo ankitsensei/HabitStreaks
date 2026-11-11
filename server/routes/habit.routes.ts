@@ -43,8 +43,7 @@ const isValidDateString = (value: string) => {
   const date = new Date(`${value}T00:00:00Z`);
 
   return (
-    !Number.isNaN(date.getTime()) &&
-    date.toISOString().slice(0, 10) === value
+    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
   );
 };
 
@@ -222,7 +221,7 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/newhabit", async (req: Request, res: Response) => {
   const parsed = parseHabitInput((req.body ?? {}) as Record<string, unknown>);
 
-  if (!parsed.ok) {
+  if (parsed.ok === false) {
     return res.status(400).json({ error: parsed.error });
   }
 
@@ -373,7 +372,7 @@ router.patch("/:habitId", async (req: Request, res: Response) => {
 
   const parsed = parseHabitInput((req.body ?? {}) as Record<string, unknown>);
 
-  if (!parsed.ok) {
+  if (parsed.ok === false) {
     return res.status(400).json({ error: parsed.error });
   }
 
