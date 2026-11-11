@@ -11,8 +11,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const corsOptions: cors.CorsOptions = {
+  origin: ["https://habit-streaks-k22x.vercel.app"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
