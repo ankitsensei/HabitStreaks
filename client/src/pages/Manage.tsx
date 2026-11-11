@@ -289,25 +289,25 @@ const Manage = () => {
   }
 
   return (
-    <div className="min-h-svh bg-[#f6f4fb] text-slate-900 dark:bg-[#0a0910] dark:text-slate-100">
+    <div className="min-h-svh bg-black text-[#f5f5f7]">
       <Navbar />
 
       <main className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-brand-300/30 blur-[120px] dark:bg-brand-600/20" />
-          <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-fuchsia-300/25 blur-[120px] dark:bg-fuchsia-600/15" />
+          <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/15 blur-[120px]" />
+          <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
         </div>
 
         <div className="relative mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white/80 px-3 py-1 text-[11.5px] font-semibold text-brand-700 shadow-sm backdrop-blur dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-200">
-            <SlidersIcon className="h-3.5 w-3.5 text-fuchsia-500 dark:text-fuchsia-300" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
+            <SlidersIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
             Manage
           </span>
 
-          <h1 className="mt-4 text-[30px] font-extrabold tracking-tight text-slate-900 sm:text-[36px] dark:text-white">
+          <h1 className="mt-4 text-[30px] font-bold tracking-tight text-[#f5f5f7] sm:text-[36px]">
             Manage your habits
           </h1>
-          <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-slate-600 dark:text-slate-400">
+          <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
             Drag habits into the order you want — it carries over to your
             Calendar. You can also edit or delete any habit.
           </p>
@@ -315,7 +315,7 @@ const Manage = () => {
           {notice && (
             <div
               role="status"
-              className="mt-6 flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20"
+              className="mt-6 flex items-start gap-2.5 rounded-xl bg-[#30D158]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#30D158] ring-1 ring-[#30D158]/25"
             >
               <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span className="flex-1">{notice}</span>
@@ -323,7 +323,7 @@ const Manage = () => {
                 type="button"
                 onClick={() => setNotice(null)}
                 aria-label="Dismiss"
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-emerald-700/70 transition hover:bg-emerald-100 hover:text-emerald-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 dark:text-emerald-200/70 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-100"
+                className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[#30D158]/70 transition hover:bg-[#30D158]/15 hover:text-[#30D158] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#30D158]/40"
               >
                 ×
               </button>
@@ -333,7 +333,7 @@ const Manage = () => {
           {error && (
             <div
               role="alert"
-              className="mt-6 flex items-start gap-2.5 rounded-xl bg-rose-50 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20"
+              className="mt-6 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
             >
               <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
@@ -341,24 +341,24 @@ const Manage = () => {
           )}
 
           {isLoading ? (
-            <div className="mt-8 flex items-center justify-center gap-3 rounded-[22px] border border-slate-200 bg-white/80 px-6 py-16 text-[13px] font-medium text-slate-500 shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600 dark:border-white/20 dark:border-t-brand-300" />
+            <div className="mt-8 flex items-center justify-center gap-3 rounded-[22px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-16 text-[13px] font-medium text-[rgba(235,235,245,0.6)]">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-[#0A84FF]" />
               Loading your habits…
             </div>
           ) : habits.length === 0 ? (
-            <div className="mt-8 rounded-[26px] border border-dashed border-slate-300 bg-white/60 px-6 py-14 text-center dark:border-white/15 dark:bg-white/[0.02]">
-              <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-400/20">
+            <div className="mt-8 rounded-[26px] border border-dashed border-white/15 bg-white/[0.02] px-6 py-14 text-center">
+              <span className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-[#0A84FF]/10 text-[#409AFF] ring-1 ring-[#0A84FF]/20">
                 <SlidersIcon className="h-7 w-7" />
               </span>
-              <h2 className="mt-4 text-[20px] font-bold text-slate-900 dark:text-white">
+              <h2 className="mt-4 text-[20px] font-bold text-[#f5f5f7]">
                 No habits to manage yet
               </h2>
-              <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[rgba(235,235,245,0.55)]">
                 Create your first habit, then come back here to edit it.
               </p>
               <Link
                 to="/newhabit"
-                className="mt-7 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-fuchsia-600 px-5 py-3 text-[13.5px] font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:brightness-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-brand-500/40"
+                className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
               >
                 <SparkIcon className="h-4 w-4" />
                 New habit
@@ -372,10 +372,10 @@ const Manage = () => {
                   key={habit.id}
                   onDragOver={(event) => handleDragOver(event, habit.id)}
                   onDrop={(event) => handleDrop(event, habit.id)}
-                  className={`flex items-center gap-3 rounded-[20px] border bg-white/85 p-4 shadow-sm backdrop-blur transition dark:bg-white/[0.03] sm:gap-4 sm:p-5 ${
+                  className={`flex items-center gap-3 rounded-[20px] border bg-[#1c1c1e] p-4 shadow-[0_16px_32px_-24px_rgba(0,0,0,0.8)] transition sm:gap-4 sm:p-5 ${
                     dragOverId === habit.id && draggingId !== habit.id
-                      ? "border-brand-300 ring-2 ring-brand-200 dark:border-brand-400/50 dark:ring-brand-500/20"
-                      : "border-slate-200 hover:border-brand-200 hover:shadow-md dark:border-white/10 dark:hover:border-brand-400/30"
+                      ? "border-[#0A84FF]/60 ring-2 ring-[#0A84FF]/25"
+                      : "border-white/[0.08] hover:border-white/[0.16]"
                   } ${draggingId === habit.id ? "opacity-50" : ""}`}
                 >
                   <span
@@ -384,7 +384,7 @@ const Manage = () => {
                     onDragEnd={resetDragState}
                     title="Drag to reorder"
                     aria-label={`Reorder ${habit.name}`}
-                    className="grid h-8 w-6 shrink-0 cursor-grab place-items-center rounded-md text-slate-300 transition hover:bg-slate-100 hover:text-slate-500 active:cursor-grabbing dark:text-slate-600 dark:hover:bg-white/10 dark:hover:text-slate-300"
+                    className="grid h-8 w-6 shrink-0 cursor-grab place-items-center rounded-md text-[rgba(235,235,245,0.35)] transition hover:bg-white/[0.08] hover:text-[rgba(235,235,245,0.7)] active:cursor-grabbing"
                   >
                     <GripIcon className="h-4 w-4" />
                   </span>
@@ -398,17 +398,17 @@ const Manage = () => {
                   </span>
 
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-[15px] font-bold text-slate-900 dark:text-white">
+                    <h2 className="truncate text-[15px] font-bold text-[#f5f5f7]">
                       {habit.name}
                     </h2>
-                    <p className="mt-0.5 truncate text-[11.5px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 truncate text-[11.5px] text-[rgba(235,235,245,0.55)]">
                       {habit.category} · {habit.target_per_week}× per week
                     </p>
                   </div>
 
                   <span
                     title="Check-ins in the last 12 months"
-                    className="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-300 sm:inline"
+                    className="hidden shrink-0 rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] font-semibold text-[rgba(235,235,245,0.65)] sm:inline"
                   >
                     {habit.completions.length}{" "}
                     {habit.completions.length === 1 ? "day" : "days"}
@@ -420,7 +420,7 @@ const Manage = () => {
                       onClick={() => setEditingHabit(habit)}
                       aria-label={`Edit ${habit.name}`}
                       title="Edit habit"
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] font-semibold text-slate-600 shadow-sm transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-brand-400/30 dark:hover:bg-brand-500/10 dark:hover:text-brand-200 dark:focus-visible:ring-brand-500/20"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:border-[#0A84FF]/40 hover:bg-[#0A84FF]/15 hover:text-[#409AFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
                     >
                       <PencilIcon className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Edit</span>
@@ -431,7 +431,7 @@ const Manage = () => {
                       onClick={() => setDeletingHabit(habit)}
                       aria-label={`Delete ${habit.name}`}
                       title="Delete habit"
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-rose-500/30 dark:hover:bg-rose-500/10 dark:hover:text-rose-300 dark:focus-visible:ring-rose-500/20"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:border-[#FF453A]/40 hover:bg-[#FF453A]/10 hover:text-[#FF6961] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF453A]/50"
                     >
                       <TrashIcon className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Delete</span>

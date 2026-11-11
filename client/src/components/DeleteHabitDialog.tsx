@@ -55,7 +55,7 @@ const DeleteHabitDialog = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-6"
       onClick={(event) => {
         if (event.target === event.currentTarget && !isDeleting) {
           onClose();
@@ -67,21 +67,21 @@ const DeleteHabitDialog = ({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="w-full rounded-t-[26px] border border-white/80 bg-white/95 p-6 shadow-[0_40px_100px_-30px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-white/10 dark:bg-[#111018]/95 sm:max-w-md sm:rounded-[26px]"
+        className="w-full rounded-t-[26px] border border-white/[0.08] bg-[#2c2c2e] p-6 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:max-w-md sm:rounded-[26px]"
       >
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20">
+        <span className="grid h-12 w-12 place-items-center rounded-[14px] bg-[#FF453A]/15 text-[#FF453A] ring-1 ring-[#FF453A]/25">
           <TrashIcon className="h-6 w-6" />
         </span>
 
         <h2
           id={titleId}
-          className="mt-4 text-[20px] font-bold text-slate-900 dark:text-white"
+          className="mt-4 text-[20px] font-bold tracking-tight text-[#f5f5f7]"
         >
           Delete habit?
         </h2>
         <p
           id={descriptionId}
-          className="mt-2 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400"
+          className="mt-2 text-[13px] leading-relaxed text-[rgba(235,235,245,0.6)]"
         >
           “{habit.name}” and all of its check-ins will be permanently deleted.
           This can&apos;t be undone.
@@ -90,7 +90,7 @@ const DeleteHabitDialog = ({
         {error && (
           <div
             role="alert"
-            className="mt-4 flex items-start gap-2.5 rounded-xl bg-rose-50 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20"
+            className="mt-4 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
           >
             <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{error}</span>
@@ -102,7 +102,7 @@ const DeleteHabitDialog = ({
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-[13.5px] font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-white/[0.07] dark:focus-visible:ring-white/10"
+            className="inline-flex items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.06] px-5 py-2.5 text-[13.5px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
@@ -110,7 +110,7 @@ const DeleteHabitDialog = ({
             type="button"
             onClick={handleConfirm}
             disabled={isDeleting}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-3 text-[13.5px] font-semibold text-white shadow-lg shadow-rose-600/25 transition hover:bg-rose-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-rose-500/40"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FF453A] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_0_20px_rgba(255,69,58,0.35)] transition hover:bg-[#FF6961] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF453A]/50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isDeleting ? (
               <>

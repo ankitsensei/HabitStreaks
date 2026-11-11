@@ -92,15 +92,15 @@ const Home = () => {
   const initials = user ? getInitials(user.email) : "";
 
   return (
-    <div className="min-h-svh bg-[#f6f4fb] text-slate-900 dark:bg-[#0a0910] dark:text-slate-100">
+    <div className="min-h-svh bg-black text-[#f5f5f7]">
       <Navbar />
 
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-brand-300/30 blur-[120px] dark:bg-brand-600/20" />
-            <div className="absolute -right-24 top-32 h-[380px] w-[380px] rounded-full bg-fuchsia-300/25 blur-[120px] dark:bg-fuchsia-600/15" />
+            <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/20 blur-[120px]" />
+            <div className="absolute -right-24 top-32 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
             <div
               className="absolute inset-0 opacity-[0.35] dark:opacity-[0.12]"
               style={{
@@ -113,20 +113,20 @@ const Home = () => {
 
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-5 py-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
             <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white/80 px-3 py-1 text-[11.5px] font-semibold text-brand-700 shadow-sm backdrop-blur dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-200">
-                <FlameIcon className="h-3.5 w-3.5 text-fuchsia-500 dark:text-fuchsia-300" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
+                <FlameIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
                 Build better habits, one day at a time
               </span>
 
-              <h1 className="mt-5 text-[38px] font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-[52px] dark:text-white">
+              <h1 className="mt-5 text-[38px] font-bold leading-[1.05] tracking-tight text-[#f5f5f7] sm:text-[52px]">
                 Small habits.
                 <br />
-                <span className="bg-gradient-to-r from-brand-600 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent dark:from-brand-300 dark:via-fuchsia-300 dark:to-amber-200">
+                <span className="bg-gradient-to-r from-[#0A84FF] via-[#64D2FF] to-[#BF5AF2] bg-clip-text text-transparent">
                   Unbreakable streaks.
                 </span>
               </h1>
 
-              <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-slate-600 sm:text-[16px] dark:text-slate-400">
+              <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-[rgba(235,235,245,0.6)] sm:text-[16px]">
                 HabitStreaks helps you check in daily, protect your momentum, and
                 see the progress you&apos;ve worked for — all in one calm,
                 focused place. Track what matters and let the streak do the
@@ -134,24 +134,24 @@ const Home = () => {
               </p>
 
               {isAuthenticated && user && (
-                <div className="mt-8 flex items-center gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.04]">
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-[15px] font-bold text-white shadow-lg shadow-brand-500/25">
+                <div className="mt-8 flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-4 shadow-[0_20px_40px_-24px_rgba(0,0,0,0.8)]">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#0A84FF] text-[15px] font-bold text-white shadow-[0_0_20px_rgba(10,132,255,0.4)]">
                     {initials}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="flex flex-wrap items-center gap-2 text-[13px] font-semibold text-slate-900 dark:text-white">
+                    <p className="flex flex-wrap items-center gap-2 text-[13px] font-semibold text-[#f5f5f7]">
                       <span className="truncate">{user.email}</span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#30D158]/10 px-2 py-0.5 text-[10px] font-bold text-[#30D158] ring-1 ring-[#30D158]/25">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#30D158]" />
                         Signed in
                       </span>
                     </p>
-                    <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-[12px] text-[rgba(235,235,245,0.55)]">
                       Welcome back. Your next streak starts today.
                     </p>
                     <Link
                       to="/habits"
-                      className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-brand-700 transition hover:text-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:text-brand-300 dark:hover:text-brand-200"
+                      className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-[#409AFF] transition hover:text-[#66AFFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
                     >
                       View my habits
                       <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -160,11 +160,11 @@ const Home = () => {
                 </div>
               )}
 
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-medium text-slate-500 dark:text-slate-400">
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-medium text-[rgba(235,235,245,0.55)]">
                 {["Free forever", "No credit card", "Private by default"].map(
                   (item) => (
                     <span key={item} className="inline-flex items-center gap-1.5">
-                      <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                      <span className="grid h-4 w-4 place-items-center rounded-full bg-[#30D158]/15 text-[#30D158]">
                         <CheckIcon className="h-2.5 w-2.5" />
                       </span>
                       {item}
@@ -178,20 +178,20 @@ const Home = () => {
             <div className="relative mx-auto w-full max-w-md">
               <div
                 aria-hidden="true"
-                className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-brand-400/25 via-fuchsia-400/15 to-amber-300/25 blur-2xl"
+                className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-[#0A84FF]/25 via-[#64D2FF]/10 to-[#BF5AF2]/20 blur-2xl"
               />
 
-              <div className="relative -rotate-1 rounded-[26px] border border-white/80 bg-white p-6 shadow-[0_30px_70px_-30px_rgba(76,29,149,0.45)] dark:border-white/10 dark:bg-[#15131f]">
+              <div className="relative -rotate-1 rounded-[26px] border border-white/[0.08] bg-[#1c1c1e] p-6 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[rgba(235,235,245,0.4)]">
                       This week
                     </p>
-                    <p className="mt-1 text-[16px] font-bold text-slate-900 dark:text-white">
+                    <p className="mt-1 text-[16px] font-bold text-[#f5f5f7]">
                       Your streak
                     </p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11.5px] font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FF9F0A]/10 px-2.5 py-1 text-[11.5px] font-bold text-[#FF9F0A] ring-1 ring-[#FF9F0A]/25">
                     <FlameIcon className="h-3.5 w-3.5" />
                     12 days
                   </span>
@@ -203,8 +203,8 @@ const Home = () => {
                       <span
                         className={`mx-auto grid h-8 w-8 place-items-center rounded-full text-[10px] font-bold ${
                           item.done
-                            ? "bg-gradient-to-br from-brand-500 to-fuchsia-500 text-white shadow-sm shadow-brand-500/30"
-                            : "border border-dashed border-slate-300 text-slate-300 dark:border-white/15 dark:text-slate-600"
+                            ? "bg-[#0A84FF] text-white shadow-[0_2px_8px_rgba(10,132,255,0.4)]"
+                            : "border border-dashed border-white/15 text-[rgba(235,235,245,0.35)]"
                         }`}
                       >
                         {item.done ? (
@@ -213,7 +213,7 @@ const Home = () => {
                           item.day
                         )}
                       </span>
-                      <span className="mt-1 block text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                      <span className="mt-1 block text-[10px] font-medium text-[rgba(235,235,245,0.4)]">
                         {item.day}
                       </span>
                     </div>
@@ -224,13 +224,13 @@ const Home = () => {
                   {habits.map((habit) => (
                     <div
                       key={habit.name}
-                      className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 dark:border-white/5 dark:bg-white/[0.03]"
+                      className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.04] px-3 py-2.5"
                     >
                       <span
                         className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${
                           habit.done
-                            ? "bg-emerald-500 text-white"
-                            : "border border-slate-300 text-slate-300 dark:border-white/15 dark:text-slate-600"
+                            ? "bg-[#30D158] text-white"
+                            : "border border-white/15 text-[rgba(235,235,245,0.35)]"
                         }`}
                       >
                         {habit.done ? (
@@ -243,21 +243,21 @@ const Home = () => {
                         <p
                           className={`truncate text-[12.5px] font-semibold ${
                             habit.done
-                              ? "text-slate-500 line-through dark:text-slate-400"
-                              : "text-slate-800 dark:text-slate-200"
+                              ? "text-[rgba(235,235,245,0.5)] line-through"
+                              : "text-[#e5e5ea]"
                           }`}
                         >
                           {habit.name}
                         </p>
-                        <p className="text-[10.5px] text-slate-400 dark:text-slate-500">
+                        <p className="text-[10.5px] text-[rgba(235,235,245,0.4)]">
                           {habit.time}
                         </p>
                       </div>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                           habit.done
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                            : "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"
+                            ? "bg-[#30D158]/10 text-[#30D158]"
+                            : "bg-white/[0.08] text-[rgba(235,235,245,0.6)]"
                         }`}
                       >
                         {habit.done ? "Done" : "Today"}
@@ -268,29 +268,29 @@ const Home = () => {
 
                 <div className="mt-5">
                   <div className="flex items-center justify-between text-[11px] font-semibold">
-                    <span className="text-slate-500 dark:text-slate-400">
+                    <span className="text-[rgba(235,235,245,0.55)]">
                       Weekly progress
                     </span>
-                    <span className="text-brand-700 dark:text-brand-300">
+                    <span className="text-[#409AFF]">
                       72%
                     </span>
                   </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-                    <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-brand-500 to-fuchsia-500" />
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.08]">
+                    <div className="h-full w-[72%] rounded-full bg-[#0A84FF]" />
                   </div>
                 </div>
               </div>
 
-              <div className="absolute -bottom-7 -left-4 rotate-2 rounded-2xl border border-white/80 bg-white px-4 py-3 shadow-xl shadow-brand-900/10 dark:border-white/10 dark:bg-[#1b1828]">
+              <div className="absolute -bottom-7 -left-4 rotate-2 rounded-2xl border border-white/[0.08] bg-[#2c2c2e] px-4 py-3 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.8)]">
                 <div className="flex items-center gap-2.5">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-400/15 dark:text-amber-300">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#FF9F0A]/15 text-[#FF9F0A]">
                     <FlameIcon className="h-[18px] w-[18px]" />
                   </span>
                   <div>
-                    <p className="text-[11.5px] font-bold text-slate-900 dark:text-white">
+                    <p className="text-[11.5px] font-bold text-[#f5f5f7]">
                       You&apos;re on a roll
                     </p>
-                    <p className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                    <p className="text-[10.5px] text-[rgba(235,235,245,0.55)]">
                       Best streak: 21 days
                     </p>
                   </div>
@@ -303,17 +303,17 @@ const Home = () => {
         {/* Features */}
         <section
           id="features"
-          className="scroll-mt-24 border-t border-slate-200/70 dark:border-white/10"
+          className="scroll-mt-24 border-t border-white/[0.08]"
         >
           <div className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
             <div className="max-w-2xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-700 dark:text-brand-300">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#0A84FF]">
                 Everything you need
               </p>
-              <h2 className="mt-3 text-[28px] font-bold tracking-tight text-slate-900 sm:text-[36px] dark:text-white">
+              <h2 className="mt-3 text-[28px] font-bold tracking-tight text-[#f5f5f7] sm:text-[36px]">
                 Built to make consistency feel easy
               </h2>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-slate-600 dark:text-slate-400">
+              <p className="mt-3 text-[14.5px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                 No overwhelming dashboards or complicated systems. Just the tools
                 you need to show up for yourself every day.
               </p>
@@ -323,15 +323,15 @@ const Home = () => {
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="group rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-900/5 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-brand-400/30"
+                  className="group rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-5 transition hover:-translate-y-0.5 hover:border-[#0A84FF]/40"
                 >
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-100 transition group-hover:scale-105 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-400/20">
+                  <span className="grid h-10 w-10 place-items-center rounded-[12px] bg-[#0A84FF]/10 text-[#409AFF] ring-1 ring-[#0A84FF]/20 transition group-hover:scale-105">
                     <feature.icon className="h-5 w-5" />
                   </span>
-                  <h3 className="mt-4 text-[14px] font-bold text-slate-900 dark:text-white">
+                  <h3 className="mt-4 text-[14px] font-bold text-[#f5f5f7]">
                     {feature.title}
                   </h3>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-[rgba(235,235,245,0.55)]">
                     {feature.description}
                   </p>
                 </div>
@@ -343,14 +343,14 @@ const Home = () => {
         {/* How it works */}
         <section
           id="how-it-works"
-          className="scroll-mt-24 border-t border-slate-200/70 bg-white/50 dark:border-white/10 dark:bg-white/[0.015]"
+          className="scroll-mt-24 border-t border-white/[0.08]"
         >
           <div className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
             <div className="max-w-2xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-700 dark:text-brand-300">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#0A84FF]">
                 How it works
               </p>
-              <h2 className="mt-3 text-[28px] font-bold tracking-tight text-slate-900 sm:text-[36px] dark:text-white">
+              <h2 className="mt-3 text-[28px] font-bold tracking-tight text-[#f5f5f7] sm:text-[36px]">
                 Three steps to a better routine
               </h2>
             </div>
@@ -359,15 +359,15 @@ const Home = () => {
               {steps.map((step) => (
                 <div
                   key={step.number}
-                  className="relative rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
+                  className="relative rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-6"
                 >
-                  <span className="text-[13px] font-extrabold tracking-[0.12em] text-brand-400 dark:text-brand-300/70">
+                  <span className="text-[13px] font-bold tracking-[0.12em] text-[#409AFF]/70">
                     {step.number}
                   </span>
-                  <h3 className="mt-3 text-[15px] font-bold text-slate-900 dark:text-white">
+                  <h3 className="mt-3 text-[15px] font-bold text-[#f5f5f7]">
                     {step.title}
                   </h3>
-                  <p className="mt-2 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-[13px] leading-relaxed text-[rgba(235,235,245,0.55)]">
                     {step.description}
                   </p>
                 </div>
@@ -379,42 +379,34 @@ const Home = () => {
         {/* Closing CTA */}
         {!isAuthenticated && (
           <section className="px-5 py-16 sm:py-20">
-            <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-[#160f2b] px-6 py-14 text-center sm:py-16">
+            <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-14 text-center sm:py-16">
               <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-                <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-brand-500/45 blur-3xl" />
-                <div className="absolute -bottom-28 -left-20 h-80 w-80 rounded-full bg-fuchsia-600/35 blur-3xl" />
-                <div
-                  className="absolute inset-0 opacity-[0.14]"
-                  style={{
-                    backgroundImage:
-                      "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-                    backgroundSize: "22px 22px",
-                  }}
-                />
+                <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#0A84FF]/30 blur-3xl" />
+                <div className="absolute -bottom-28 -left-20 h-80 w-80 rounded-full bg-[#BF5AF2]/20 blur-3xl" />
               </div>
 
               <div className="relative z-10">
                 <h2 className="mx-auto max-w-2xl text-[28px] font-bold tracking-tight text-white sm:text-[38px]">
                   Your best year starts with{" "}
-                  <span className="bg-gradient-to-r from-brand-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-[#66AFFF] via-[#64D2FF] to-[#BF5AF2] bg-clip-text text-transparent">
                     one small habit.
                   </span>
                 </h2>
-                <p className="mx-auto mt-3 max-w-xl text-[14.5px] leading-relaxed text-white/60">
+                <p className="mx-auto mt-3 max-w-xl text-[14.5px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                   Join HabitStreaks today and give yourself the structure to keep
                   going — even on the days you don&apos;t feel like it.
                 </p>
                 <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
                   <Link
                     to="/register"
-                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-[14.5px] font-semibold text-brand-800 shadow-lg transition hover:bg-brand-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-6 py-3 text-[14.5px] font-semibold text-white shadow-[0_0_30px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#0A84FF]/40"
                   >
                     Create your free account
                     <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <Link
                     to="/login"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/[0.06] px-6 py-3.5 text-[14.5px] font-semibold text-white backdrop-blur transition hover:bg-white/[0.12] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.08] px-6 py-3 text-[14.5px] font-semibold text-white backdrop-blur transition hover:bg-white/[0.14] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
                   >
                     Sign in
                   </Link>
@@ -425,13 +417,13 @@ const Home = () => {
         )}
       </main>
 
-      <footer className="border-t border-slate-200/70 dark:border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-[12px] text-slate-500 sm:flex-row dark:text-slate-400">
+      <footer className="border-t border-white/[0.08]">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-[12px] text-[rgba(235,235,245,0.55)] sm:flex-row">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-fuchsia-500 text-white">
+            <span className="grid h-7 w-7 place-items-center rounded-[9px] bg-[#0A84FF] text-white">
               <FlameIcon className="h-3.5 w-3.5" />
             </span>
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
+            <span className="font-semibold text-[#e5e5ea]">
               HabitStreaks
             </span>
           </div>
@@ -441,7 +433,7 @@ const Home = () => {
           <div className="flex items-center gap-4 font-medium">
             <a
               href="#features"
-              className="transition hover:text-brand-700 dark:hover:text-brand-300"
+              className="transition hover:text-[#409AFF]"
             >
               Features
             </a>
@@ -449,14 +441,14 @@ const Home = () => {
               <button
                 type="button"
                 onClick={signOut}
-                className="transition hover:text-brand-700 dark:hover:text-brand-300"
+                className="transition hover:text-[#409AFF]"
               >
                 Sign out
               </button>
             ) : (
               <Link
                 to="/login"
-                className="transition hover:text-brand-700 dark:hover:text-brand-300"
+                className="transition hover:text-[#409AFF]"
               >
                 Sign in
               </Link>

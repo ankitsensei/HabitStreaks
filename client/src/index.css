@@ -1,33 +1,60 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans:
-    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+/*
+ * Dark mode is the only theme.
+ * The `dark` class is applied on <html> (index.html) so `dark:` utilities
+ * always resolve, regardless of the OS appearance setting.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --color-brand-50: #f5f3ff;
-  --color-brand-100: #ede9fe;
-  --color-brand-200: #ddd6fe;
-  --color-brand-300: #c4b5fd;
-  --color-brand-400: #a78bfa;
-  --color-brand-500: #8b5cf6;
-  --color-brand-600: #7c3aed;
-  --color-brand-700: #6d28d9;
-  --color-brand-800: #5b21b6;
-  --color-brand-900: #4c1d95;
-  --color-brand-950: #2e1065;
+@theme {
+  /* Apple system font stack — SF Pro on Apple devices. */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* Apple system blue ramp — iOS dark-mode accent (#0A84FF). */
+  --color-brand-50: rgb(10 132 255 / 0.1);
+  --color-brand-100: rgb(10 132 255 / 0.16);
+  --color-brand-200: rgb(10 132 255 / 0.3);
+  --color-brand-300: #66afff;
+  --color-brand-400: #409aff;
+  --color-brand-500: #0a84ff;
+  --color-brand-600: #0a84ff;
+  --color-brand-700: #3395ff;
+  --color-brand-800: #66b2ff;
+  --color-brand-900: #99ccff;
+  --color-brand-950: #cce6ff;
+
+  /* iOS dark-mode surfaces. */
+  --color-surface: #1c1c1e;
+  --color-surface-2: #2c2c2e;
+  --color-surface-3: #3a3a3c;
+
+  /* Apple label hierarchy. */
+  --color-label: #f5f5f7;
+  --color-label-2: rgb(235 235 245 / 0.6);
+  --color-label-3: rgb(235 235 245 / 0.35);
+
+  /* Apple system colors (dark mode). */
+  --color-ios-blue: #0a84ff;
+  --color-ios-green: #30d158;
+  --color-ios-red: #ff453a;
+  --color-ios-orange: #ff9f0a;
+  --color-ios-purple: #bf5af2;
+  --color-ios-cyan: #64d2ff;
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: dark;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   min-height: 100svh;
-  background-color: #f6f4fb;
-  color: #0f172a;
+  background-color: #000;
+  color: #f5f5f7;
   font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -35,24 +62,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #0a0910;
-    color: #e2e8f0;
-  }
-}
-
 #root {
   min-height: 100svh;
 }
 
 ::selection {
-  background-color: rgba(124, 58, 237, 0.22);
+  background-color: rgb(10 132 255 / 0.35);
 }
 
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Slim, unobtrusive macOS-style scrollbars. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(120 120 128 / 0.4);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(120 120 128 / 0.6);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 @keyframes fade-up {
@@ -67,7 +106,7 @@ a {
 }
 
 .animate-fade-up {
-  animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

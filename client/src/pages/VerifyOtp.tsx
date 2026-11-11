@@ -25,7 +25,7 @@ interface VerifyOtpState {
 }
 
 const primaryButton =
-  "group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-fuchsia-600 px-4 py-3.5 text-[14.5px] font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:brightness-105 hover:shadow-xl hover:shadow-brand-600/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-brand-500/40";
+  "group flex w-full items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-4 py-3 text-[14.5px] font-semibold text-white shadow-[0_0_24px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:cursor-not-allowed disabled:opacity-60";
 
 const Spinner = () => (
   <span
@@ -35,7 +35,7 @@ const Spinner = () => (
 );
 
 const FieldError = ({ message }: { message: string }) => (
-  <p className="mt-1.5 flex items-center gap-1 text-[12px] font-medium text-rose-600 dark:text-rose-400">
+  <p className="mt-1.5 flex items-center gap-1 text-[12px] font-medium text-[#FF6961]">
     <AlertIcon className="h-3.5 w-3.5 shrink-0" />
     {message}
   </p>
@@ -189,29 +189,29 @@ const VerifyOtp = () => {
       <div className="animate-fade-up">
         <Link
           to="/register"
-          className="mb-8 inline-flex items-center gap-1.5 rounded-lg text-[12.5px] font-semibold text-slate-500 transition hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:text-slate-400 dark:hover:text-slate-100"
+          className="mb-8 inline-flex items-center gap-1.5 rounded-full text-[12.5px] font-semibold text-[rgba(235,235,245,0.6)] transition hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to sign up
         </Link>
 
-        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-400/20">
+        <span className="grid h-14 w-14 place-items-center rounded-[16px] bg-[#0A84FF]/10 text-[#409AFF] ring-1 ring-[#0A84FF]/20">
           <MailIcon className="h-6 w-6" />
         </span>
 
-        <h1 className="mt-6 text-[28px] font-bold tracking-tight text-slate-900 sm:text-[32px] dark:text-white">
+        <h1 className="mt-6 text-[28px] font-bold tracking-tight text-[#f5f5f7] sm:text-[32px]">
           Check your inbox
         </h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
           We sent a 6-digit verification code to{" "}
-          <span className="font-semibold text-slate-700 dark:text-slate-200">
+          <span className="font-semibold text-[#e5e5ea]">
             {email}
           </span>
           . Enter it below to finish creating your account.
         </p>
 
         {notice && (
-          <div className="mt-5 flex items-start gap-2 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
+          <div className="mt-5 flex items-start gap-2 rounded-xl bg-[#30D158]/10 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#30D158] ring-1 ring-[#30D158]/25">
             <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{notice}</span>
           </div>
@@ -219,7 +219,7 @@ const VerifyOtp = () => {
 
         <form className="mt-7 space-y-5" onSubmit={handleVerify} noValidate>
           <div>
-            <label className="mb-2 block text-[12.5px] font-semibold text-slate-700 dark:text-slate-300">
+            <label className="mb-2 block text-[12.5px] font-semibold text-[rgba(235,235,245,0.7)]">
               Verification code
             </label>
             <div className="flex gap-2 sm:gap-2.5">
@@ -241,10 +241,10 @@ const VerifyOtp = () => {
                   onPaste={handleOtpPaste}
                   aria-label={`Digit ${index + 1}`}
                   aria-invalid={Boolean(otpError)}
-                  className={`h-14 w-full min-w-0 rounded-xl border bg-white text-center text-xl font-semibold text-slate-900 shadow-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100 dark:bg-white/[0.04] dark:text-white dark:focus:border-brand-400/70 dark:focus:ring-brand-500/15 ${
+                  className={`h-14 w-full min-w-0 rounded-xl border bg-white/[0.06] text-center text-xl font-semibold text-[#f5f5f7] outline-none transition focus:border-[#0A84FF] focus:ring-4 focus:ring-[#0A84FF]/25 ${
                     otpError
-                      ? "border-rose-300 dark:border-rose-400/40"
-                      : "border-slate-200 dark:border-white/10"
+                      ? "border-[#FF453A]/60"
+                      : "border-white/[0.08]"
                   }`}
                 />
               ))}
@@ -271,13 +271,13 @@ const VerifyOtp = () => {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-[12.5px] leading-relaxed text-slate-400 dark:text-slate-500">
+        <p className="mt-6 text-center text-[12.5px] leading-relaxed text-[rgba(235,235,245,0.4)]">
           Didn&apos;t get the email? Check your spam folder or{" "}
           <button
             type="button"
             onClick={handleResend}
             disabled={cooldown > 0 || isResending}
-            className="font-semibold text-brand-700 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline dark:text-brand-300 dark:disabled:text-slate-500"
+            className="font-semibold text-[#409AFF] hover:underline disabled:cursor-not-allowed disabled:text-[rgba(235,235,245,0.4)] disabled:no-underline"
           >
             {isResending
               ? "sending a new code…"

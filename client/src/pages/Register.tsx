@@ -25,19 +25,19 @@ import { getToken } from "../lib/auth";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const inputBase =
-  "w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-[14.5px] text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400/70 dark:focus:ring-brand-500/15";
-const inputNormal = "border-slate-200 dark:border-white/10";
+  "w-full rounded-xl border bg-white/[0.06] py-3 pl-11 pr-4 text-[14.5px] text-[#f5f5f7] outline-none transition placeholder:text-[rgba(235,235,245,0.35)] focus:border-[#0A84FF] focus:ring-4 focus:ring-[#0A84FF]/25";
+const inputNormal = "border-white/[0.08]";
 const inputInvalid =
-  "border-rose-300 focus:border-rose-400 focus:ring-rose-100 dark:border-rose-400/40 dark:focus:border-rose-400/60 dark:focus:ring-rose-500/15";
+  "border-[#FF453A]/60 focus:border-[#FF453A] focus:ring-[#FF453A]/20";
 
 const primaryButton =
-  "group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-fuchsia-600 px-4 py-3.5 text-[14.5px] font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:brightness-105 hover:shadow-xl hover:shadow-brand-600/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-brand-500/40";
+  "group flex w-full items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-4 py-3 text-[14.5px] font-semibold text-white shadow-[0_0_24px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:cursor-not-allowed disabled:opacity-60";
 
 const Spinner = ({ light = true }: { light?: boolean }) => (
   <span
     aria-hidden="true"
     className={`h-4 w-4 animate-spin rounded-full border-2 ${
-      light ? "border-white/40 border-t-white" : "border-slate-300 border-t-brand-600"
+      light ? "border-white/40 border-t-white" : "border-white/25 border-t-[#0A84FF]"
     }`}
   />
 );
@@ -45,16 +45,12 @@ const Spinner = ({ light = true }: { light?: boolean }) => (
 const Requirement = ({ met, label }: { met: boolean; label: string }) => (
   <span
     className={`inline-flex items-center gap-1 text-[11.5px] font-medium ${
-      met
-        ? "text-emerald-600 dark:text-emerald-400"
-        : "text-slate-400 dark:text-slate-500"
+      met ? "text-[#30D158]" : "text-[rgba(235,235,245,0.4)]"
     }`}
   >
     <span
       className={`grid h-3.5 w-3.5 place-items-center rounded-full ${
-        met
-          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-          : "bg-slate-200 text-slate-400 dark:bg-white/10 dark:text-slate-500"
+        met ? "bg-[#30D158]/15 text-[#30D158]" : "bg-white/[0.08] text-[rgba(235,235,245,0.4)]"
       }`}
     >
       <CheckIcon className="h-2.5 w-2.5" />
@@ -64,7 +60,7 @@ const Requirement = ({ met, label }: { met: boolean; label: string }) => (
 );
 
 const FieldError = ({ message }: { message: string }) => (
-  <p className="mt-1.5 flex items-center gap-1 text-[12px] font-medium text-rose-600 dark:text-rose-400">
+  <p className="mt-1.5 flex items-center gap-1 text-[12px] font-medium text-[#FF6961]">
     <AlertIcon className="h-3.5 w-3.5 shrink-0" />
     {message}
   </p>
@@ -73,7 +69,7 @@ const FieldError = ({ message }: { message: string }) => (
 const Logo = ({ compact = false }: { compact?: boolean }) => (
   <div className="flex items-center gap-2.5">
     <span
-      className={`grid place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30 ${
+      className={`grid place-items-center rounded-[12px] bg-[#0A84FF] text-white shadow-[0_0_24px_rgba(10,132,255,0.45)] ${
         compact ? "h-9 w-9" : "h-10 w-10"
       }`}
     >
@@ -81,9 +77,7 @@ const Logo = ({ compact = false }: { compact?: boolean }) => (
     </span>
     <span
       className={`font-semibold tracking-tight ${
-        compact
-          ? "text-[16px] text-slate-900 dark:text-white"
-          : "text-[17px] text-white"
+        compact ? "text-[16px] text-[#f5f5f7]" : "text-[17px] text-white"
       }`}
     >
       HabitStreaks
@@ -243,45 +237,37 @@ const Register = () => {
   };
 
   return (
-    <div className="relative min-h-svh overflow-hidden px-3 py-3 sm:px-5 sm:py-5">
+    <div className="relative min-h-svh overflow-hidden bg-black px-3 py-3 sm:px-5 sm:py-5">
       <div aria-hidden="true" className="pointer-events-none fixed inset-0">
-        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-brand-300/30 blur-[120px] dark:bg-brand-600/20" />
-        <div className="absolute -bottom-40 right-0 h-[480px] w-[480px] rounded-full bg-fuchsia-300/25 blur-[130px] dark:bg-fuchsia-600/10" />
+        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/20 blur-[130px]" />
+        <div className="absolute -bottom-40 right-0 h-[480px] w-[480px] rounded-full bg-[#BF5AF2]/10 blur-[130px]" />
       </div>
 
-      <main className="relative mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-6xl overflow-hidden rounded-[28px] border border-white/70 bg-white/80 shadow-[0_30px_90px_-45px_rgba(76,29,149,0.55)] backdrop-blur-xl sm:min-h-[calc(100svh-2.5rem)] dark:border-white/10 dark:bg-[#111018]/85">
+      <main className="relative mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-6xl overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#1c1c1e]/80 shadow-[0_40px_90px_-45px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:min-h-[calc(100svh-2.5rem)]">
         {/* Brand panel */}
-        <aside className="relative hidden w-[46%] max-w-[540px] shrink-0 flex-col overflow-hidden bg-[#160f2b] p-10 lg:flex xl:p-12">
+        <aside className="relative hidden w-[46%] max-w-[540px] shrink-0 flex-col overflow-hidden bg-[#141416] p-10 lg:flex xl:p-12">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-500/45 blur-3xl" />
-            <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-fuchsia-600/35 blur-3xl" />
-            <div
-              className="absolute inset-0 opacity-[0.14]"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-                backgroundSize: "22px 22px",
-              }}
-            />
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#0A84FF]/25 blur-3xl" />
+            <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-[#BF5AF2]/15 blur-3xl" />
           </div>
 
           <div className="relative z-10 flex flex-1 flex-col">
             <Logo />
 
             <div className="mt-14">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1 text-[11px] font-medium tracking-wide text-brand-100 backdrop-blur">
-                <SparkIcon className="h-3.5 w-3.5 text-amber-300" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.07] px-3 py-1 text-[11px] font-medium tracking-wide text-[rgba(235,235,245,0.7)] backdrop-blur">
+                <SparkIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
                 Free forever · No credit card
               </span>
 
-              <h2 className="mt-5 text-[34px] font-bold leading-[1.1] tracking-tight text-white xl:text-[40px]">
+              <h2 className="mt-5 text-[34px] font-bold leading-[1.08] tracking-tight text-white xl:text-[40px]">
                 Build habits that{" "}
-                <span className="bg-gradient-to-r from-brand-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#0A84FF] via-[#64D2FF] to-[#BF5AF2] bg-clip-text text-transparent">
                   actually stick.
                 </span>
               </h2>
 
-              <p className="mt-4 max-w-sm text-[14.5px] leading-relaxed text-white/60">
+              <p className="mt-4 max-w-sm text-[14.5px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                 Track your daily wins, protect your momentum, and turn small
                 actions into a year of change.
               </p>
@@ -290,14 +276,14 @@ const Register = () => {
             <ul className="mt-10 space-y-5">
               {features.map((feature) => (
                 <li key={feature.title} className="flex items-start gap-3.5">
-                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.07] text-brand-200">
+                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-[12px] border border-white/[0.08] bg-white/[0.06] text-[#409AFF]">
                     <feature.icon className="h-[18px] w-[18px]" />
                   </span>
                   <div>
                     <p className="text-[13.5px] font-semibold text-white">
                       {feature.title}
                     </p>
-                    <p className="mt-0.5 text-[12.5px] leading-relaxed text-white/50">
+                    <p className="mt-0.5 text-[12.5px] leading-relaxed text-[rgba(235,235,245,0.5)]">
                       {feature.description}
                     </p>
                   </div>
@@ -306,10 +292,10 @@ const Register = () => {
             </ul>
 
             <div className="mt-auto pt-10">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur">
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.05] p-5 backdrop-blur">
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-white/70">
-                    <FlameIcon className="h-4 w-4 text-amber-300" />
+                  <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[rgba(235,235,245,0.7)]">
+                    <FlameIcon className="h-4 w-4 text-[#FF9F0A]" />
                     Current streak
                   </span>
                   <span className="text-[13px] font-semibold text-white">
@@ -322,13 +308,13 @@ const Register = () => {
                       key={index}
                       className={`aspect-square rounded-[5px] ${
                         active
-                          ? "bg-gradient-to-br from-brand-400 to-fuchsia-400 shadow-sm shadow-fuchsia-500/30"
+                          ? "bg-[#0A84FF] shadow-[0_0_6px_rgba(10,132,255,0.5)]"
                           : "bg-white/[0.08]"
                       }`}
                     />
                   ))}
                 </div>
-                <p className="mt-3 text-[11.5px] text-white/40">
+                <p className="mt-3 text-[11.5px] text-[rgba(235,235,245,0.4)]">
                   Every small win adds up.
                 </p>
               </div>
@@ -345,10 +331,10 @@ const Register = () => {
 
             <div className="animate-fade-up">
               <header>
-                  <h1 className="text-[28px] font-bold tracking-tight text-slate-900 sm:text-[32px] dark:text-white">
+                  <h1 className="text-[28px] font-bold tracking-tight text-[#f5f5f7] sm:text-[32px]">
                     Create your account
                   </h1>
-                  <p className="mt-2 text-[14px] leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                     Start building better habits today. It&apos;s free and takes
                     less than a minute.
                   </p>
@@ -359,7 +345,7 @@ const Register = () => {
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={isGoogleLoading}
-                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14.5px] font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:shadow focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-100 dark:hover:border-white/20 dark:hover:bg-white/[0.09] dark:focus-visible:ring-white/10"
+                    className="flex w-full items-center justify-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.06] px-4 py-2.5 text-[14.5px] font-semibold text-white transition hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isGoogleLoading ? (
                       <Spinner light={false} />
@@ -370,30 +356,30 @@ const Register = () => {
                   </button>
 
                   {googleNotice && (
-                    <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-[12px] leading-relaxed text-amber-800 ring-1 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-200 dark:ring-amber-400/20">
+                    <div className="flex items-start gap-2 rounded-xl bg-[#FF9F0A]/10 px-3.5 py-2.5 text-[12px] leading-relaxed text-[#FFB340] ring-1 ring-[#FF9F0A]/25">
                       <AlertIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span>{googleNotice}</span>
                     </div>
                   )}
 
                   <div className="flex items-center gap-3">
-                    <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
-                    <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                    <span className="h-px flex-1 bg-white/[0.08]" />
+                    <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[rgba(235,235,245,0.4)]">
                       or sign up with email
                     </span>
-                    <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+                    <span className="h-px flex-1 bg-white/[0.08]" />
                   </div>
 
                   <form className="space-y-5" onSubmit={handleSubmit} noValidate>
                     <div>
                       <label
                         htmlFor="email"
-                        className="mb-1.5 block text-[12.5px] font-semibold text-slate-700 dark:text-slate-300"
+                        className="mb-1.5 block text-[12.5px] font-semibold text-[rgba(235,235,245,0.7)]"
                       >
                         Email address
                       </label>
                       <div className="relative">
-                        <MailIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
+                        <MailIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[rgba(235,235,245,0.4)]" />
                         <input
                           id="email"
                           type="email"
@@ -420,12 +406,12 @@ const Register = () => {
                     <div>
                       <label
                         htmlFor="password"
-                        className="mb-1.5 block text-[12.5px] font-semibold text-slate-700 dark:text-slate-300"
+                        className="mb-1.5 block text-[12.5px] font-semibold text-[rgba(235,235,245,0.7)]"
                       >
                         Password
                       </label>
                       <div className="relative">
-                        <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
+                        <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[rgba(235,235,245,0.4)]" />
                         <input
                           id="password"
                           type={showPassword ? "text" : "password"}
@@ -451,7 +437,7 @@ const Register = () => {
                           aria-label={
                             showPassword ? "Hide password" : "Show password"
                           }
-                          className="absolute right-2.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:hover:bg-white/10 dark:hover:text-slate-200"
+                          className="absolute right-2.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[rgba(235,235,245,0.4)] transition hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
                         >
                           {showPassword ? (
                             <EyeOffIcon className="h-[18px] w-[18px]" />
@@ -485,12 +471,12 @@ const Register = () => {
                     <div>
                       <label
                         htmlFor="confirm-password"
-                        className="mb-1.5 block text-[12.5px] font-semibold text-slate-700 dark:text-slate-300"
+                        className="mb-1.5 block text-[12.5px] font-semibold text-[rgba(235,235,245,0.7)]"
                       >
                         Confirm password
                       </label>
                       <div className="relative">
-                        <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
+                        <LockIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[rgba(235,235,245,0.4)]" />
                         <input
                           id="confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
@@ -522,7 +508,7 @@ const Register = () => {
                               ? "Hide password"
                               : "Show password"
                           }
-                          className="absolute right-2.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:hover:bg-white/10 dark:hover:text-slate-200"
+                          className="absolute right-2.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[rgba(235,235,245,0.4)] transition hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
                         >
                           {showConfirmPassword ? (
                             <EyeOffIcon className="h-[18px] w-[18px]" />
@@ -537,7 +523,7 @@ const Register = () => {
                     </div>
 
                     <div>
-                      <label className="flex cursor-pointer items-start gap-2.5 text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      <label className="flex cursor-pointer items-start gap-2.5 text-[12px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                         <input
                           type="checkbox"
                           checked={acceptedTerms}
@@ -548,20 +534,20 @@ const Register = () => {
                               terms: "",
                             }));
                           }}
-                          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 accent-brand-600"
+                          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-white/20 accent-[#0A84FF]"
                         />
                         <span>
                           I agree to the{" "}
                           <a
                             href="/terms"
-                            className="font-semibold text-brand-700 hover:underline dark:text-brand-300"
+                            className="font-semibold text-[#409AFF] hover:underline"
                           >
                             Terms of Service
                           </a>{" "}
                           and{" "}
                           <a
                             href="/privacy"
-                            className="font-semibold text-brand-700 hover:underline dark:text-brand-300"
+                            className="font-semibold text-[#409AFF] hover:underline"
                           >
                             Privacy Policy
                           </a>
@@ -572,7 +558,7 @@ const Register = () => {
                     </div>
 
                     {formError && (
-                      <div className="flex items-start gap-2 rounded-xl bg-rose-50 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20">
+                      <div className="flex items-start gap-2 rounded-xl bg-[#FF453A]/10 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25">
                         <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
                         <span>{formError}</span>
                       </div>
@@ -598,11 +584,11 @@ const Register = () => {
                   </form>
                 </div>
 
-                <p className="mt-8 text-center text-[13px] text-slate-500 dark:text-slate-400">
+                <p className="mt-8 text-center text-[13px] text-[rgba(235,235,245,0.6)]">
                   Already have an account?{" "}
                   <a
                     href="/login"
-                    className="font-semibold text-brand-700 hover:text-brand-800 hover:underline dark:text-brand-300 dark:hover:text-brand-200"
+                    className="font-semibold text-[#409AFF] hover:text-[#66AFFF] hover:underline"
                   >
                     Sign in
                   </a>

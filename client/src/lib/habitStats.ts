@@ -39,6 +39,19 @@ export const addDays = (date: Date, days: number) => {
   return next;
 };
 
+// Adds calendar months while keeping the day-of-month when possible (Jan 31
+// + 1 month becomes Feb 28/29 instead of rolling into March).
+export const addMonths = (date: Date, months: number) => {
+  const target = new Date(date.getFullYear(), date.getMonth() + months, 1);
+  const lastDay = new Date(
+    target.getFullYear(),
+    target.getMonth() + 1,
+    0,
+  ).getDate();
+  target.setDate(Math.min(date.getDate(), lastDay));
+  return target;
+};
+
 export const getStartOfWeek = (date: Date) => addDays(date, -date.getDay());
 
 export const formatDateKey = (date: Date) => {
@@ -47,6 +60,10 @@ export const formatDateKey = (date: Date) => {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+// Local calendar day a habit was created on, used for eligibility checks.
+export const getHabitCreatedKey = (habit: HabitWithCompletions) =>
+  formatDateKey(startOfDay(new Date(habit.created_at)));
 
 const parseDateKey = (key: string) => new Date(`${key}T00:00:00`);
 
@@ -66,6 +83,29 @@ export const getStatsRange = (): StatsRange => {
   );
 
   return { from, to };
+};
+
+export const getToday = () => startOfDay(new Date());
+
+// Splits a date range into inclusive chunks no longer than maxDays, newest
+// chunk first. Used to fetch all-time history under the API's range limit.
+export const splitRange = (
+  range: StatsRange,
+  maxDays: number,
+): StatsRange[] => {
+  const chunks: StatsRange[] = [];
+  let chunkEnd = startOfDay(range.to);
+
+  while (chunkEnd.getTime() >= range.from.getTime()) {
+    const chunkStart = addDays(chunkEnd, -(maxDays - 1));
+    const from =
+      chunkStart.getTime() < range.from.getTime() ? range.from : chunkStart;
+
+    chunks.push({ from, to: chunkEnd });
+    chunkEnd = addDays(from, -1);
+  }
+
+  return chunks;
 };
 
 export interface Streaks {
@@ -254,7 +294,92 @@ export const buildComparisonCharts = (
 
 // --- Screen Time-style period summaries ------------------------------------
 
-export type StatsPeriod = "day" | "week" | "month" | "year" | "allYear";
+export type StatsPeriod = "day" | "week" | "month" | "year";
+
+// The full calendar range shown for a period, before capping at today.
+export const getPeriodDisplayRange = (
+  period: StatsPeriod,
+  cursor: Date,
+): StatsRange => {
+  switch (period) {
+    case "day": {
+      const day = startOfDay(cursor);
+      return { from: day, to: day };
+    }
+    case "week": {
+      const from = getStartOfWeek(cursor);
+      return { from, to: addDays(from, 6) };
+    }
+    case "month":
+      return {
+        from: new Date(cursor.getFullYear(), cursor.getMonth(), 1),
+        to: new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0),
+      };
+    case "year":
+      return {
+        from: new Date(cursor.getFullYear(), 0, 1),
+        to: new Date(cursor.getFullYear(), 11, 31),
+      };
+  }
+};
+
+// Range to fetch: the full period, capped so we never ask for future days.
+export const getPeriodViewRange = (
+  period: StatsPeriod,
+  cursor: Date,
+  today: Date,
+): StatsRange => {
+  const display = getPeriodDisplayRange(period, cursor);
+  const endOfToday = startOfDay(today);
+
+  return {
+    from:
+      display.from.getTime() > endOfToday.getTime()
+        ? endOfToday
+        : display.from,
+    to: display.to.getTime() > endOfToday.getTime() ? endOfToday : display.to,
+  };
+};
+
+export const isPeriodAtCurrent = (
+  period: StatsPeriod,
+  cursor: Date,
+  today: Date,
+): boolean => {
+  switch (period) {
+    case "day":
+      return formatDateKey(cursor) === formatDateKey(today);
+    case "week":
+      return (
+        formatDateKey(getStartOfWeek(cursor)) ===
+        formatDateKey(getStartOfWeek(today))
+      );
+    case "month":
+      return (
+        cursor.getFullYear() === today.getFullYear() &&
+        cursor.getMonth() === today.getMonth()
+      );
+    case "year":
+      return cursor.getFullYear() === today.getFullYear();
+  }
+};
+
+export const shiftPeriodCursor = (
+  period: StatsPeriod,
+  cursor: Date,
+  direction: 1 | -1,
+): Date => {
+  switch (period) {
+    case "day":
+      return addDays(cursor, direction);
+    case "week":
+      return addDays(cursor, direction * 7);
+    case "month":
+      return addMonths(cursor, direction);
+    case "year":
+      return addMonths(cursor, direction * 12);
+  }
+};
 
 export interface PeriodSummary {
   period: StatsPeriod;
@@ -282,53 +407,33 @@ const getPeriodStart = (period: StatsPeriod, range: StatsRange): Date => {
       return new Date(today.getFullYear(), today.getMonth(), 1);
     case "year":
       return new Date(today.getFullYear(), 0, 1);
-    case "allYear":
-      return range.from;
   }
-};
-
-// Monthly buckets across the whole fetched window (trailing 12 months).
-const buildRollingMonthBuckets = (
-  habits: HabitWithCompletions[],
-  range: StatsRange,
-): ComparisonBucket[] => {
-  const todayMonth = formatDateKey(range.to).slice(0, 7);
-
-  return Array.from({ length: MONTHS_SHOWN }, (_, index) => {
-    const month = new Date(
-      range.from.getFullYear(),
-      range.from.getMonth() + index,
-      1,
-    );
-    const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
-
-    return {
-      key: monthKey,
-      label: MONTHS[month.getMonth()],
-      title: `${MONTHS[month.getMonth()]} ${month.getFullYear()}`,
-      counts: habits.map(
-        (habit) =>
-          habit.completions.filter((completion) =>
-            completion.startsWith(monthKey),
-          ).length,
-      ),
-      isFuture: monthKey > todayMonth,
-      isToday: monthKey === todayMonth,
-    };
-  });
 };
 
 export const buildPeriodSummaries = (
   habits: HabitWithCompletions[],
   range: StatsRange,
+  today: Date = range.to,
 ): Record<StatsPeriod, PeriodSummary> => {
   const todayKey = formatDateKey(range.to);
+  const actualTodayKey = formatDateKey(today);
+  const actualTodayMonth = actualTodayKey.slice(0, 7);
   const completionSets = habits.map((habit) => new Set(habit.completions));
   const createdDates = habits.map((habit) =>
     startOfDay(new Date(habit.created_at)),
   );
   const comparison = buildComparisonCharts(habits, range.to);
-  const rollingMonths = buildRollingMonthBuckets(habits, range);
+
+  // Buckets are anchored on the selected period, but "today" should always
+  // mean the real today, so past periods don't highlight their last day.
+  const markToday = (buckets: ComparisonBucket[]) =>
+    buckets.map((bucket) => ({
+      ...bucket,
+      isToday:
+        bucket.key.length === 7
+          ? bucket.key === actualTodayMonth
+          : bucket.key === actualTodayKey,
+    }));
 
   const build = (period: StatsPeriod): PeriodSummary => {
     const start = getPeriodStart(period, range);
@@ -377,22 +482,19 @@ export const buildPeriodSummaries = (
 
     const bestWeekday = bestIndex(weekdayCounts);
     const dailyAverage = total / elapsedDays;
-    const isMonthlyScale = period === "year" || period === "allYear";
-    const monthsElapsed =
-      period === "year" ? range.to.getMonth() + 1 : MONTHS_SHOWN;
+    const isMonthlyScale = period === "year";
+    const monthsElapsed = range.to.getMonth() + 1;
 
     return {
       period,
       buckets:
         period === "week"
-          ? comparison.weekly
+          ? markToday(comparison.weekly)
           : period === "month"
-            ? comparison.monthly
+            ? markToday(comparison.monthly)
             : period === "year"
-              ? comparison.yearly
-              : period === "allYear"
-                ? rollingMonths
-                : [],
+              ? markToday(comparison.yearly)
+              : [],
       total,
       habitCounts,
       elapsedDays,
@@ -411,7 +513,132 @@ export const buildPeriodSummaries = (
     week: build("week"),
     month: build("month"),
     year: build("year"),
-    allYear: build("allYear"),
+  };
+};
+
+// --- All-time overall summary ----------------------------------------------
+
+export interface OverallHabitSummary {
+  habit: HabitWithCompletions;
+  total: number;
+  currentStreak: number;
+  longestStreak: number;
+  completionRate: number;
+}
+
+export interface OverallSummary {
+  totalCheckIns: number;
+  activeDays: number;
+  perfectDays: number;
+  currentStreak: number;
+  longestStreak: number;
+  completionRate: number;
+  trackingSince: Date;
+  habitSummaries: OverallHabitSummary[];
+}
+
+const getDaysActive = (created: Date, today: Date) =>
+  Math.max(
+    1,
+    Math.round((today.getTime() - created.getTime()) / DAY_MS) + 1,
+  );
+
+const getCompletionRate = (total: number, expected: number) =>
+  expected <= 0 ? 0 : Math.min(100, Math.round((total / expected) * 100));
+
+// Lifetime stats across every habit, computed from all of their completions.
+export const buildOverallSummary = (
+  habits: HabitWithCompletions[],
+  today: Date,
+): OverallSummary => {
+  const todayKey = formatDateKey(today);
+  const createdDates = habits.map((habit) =>
+    startOfDay(new Date(habit.created_at)),
+  );
+  const earliestCreated =
+    createdDates.reduce<Date | null>(
+      (earliest, created) =>
+        earliest === null || created < earliest ? created : earliest,
+      null,
+    ) ?? startOfDay(today);
+  const completionKeys = habits.flatMap((habit) => habit.completions);
+  const earliestCompletionKey =
+    completionKeys.length > 0
+      ? completionKeys.reduce(
+          (earliest, key) => (key < earliest ? key : earliest),
+          completionKeys[0],
+        )
+      : null;
+  const earliestCompletion =
+    earliestCompletionKey === null
+      ? null
+      : parseDateKey(earliestCompletionKey);
+  const trackingSince =
+    earliestCompletion !== null && earliestCompletion < earliestCreated
+      ? earliestCompletion
+      : earliestCreated;
+  const completionSets = habits.map((habit) => new Set(habit.completions));
+
+  const habitSummaries = habits.map((habit, index) => {
+    const streaks = computeStreaks(habit.completions, todayKey);
+    const daysActive = getDaysActive(createdDates[index], today);
+
+    return {
+      habit,
+      total: habit.completions.length,
+      currentStreak: streaks.current,
+      longestStreak: streaks.longest,
+      completionRate: getCompletionRate(
+        habit.completions.length,
+        (habit.target_per_week / 7) * daysActive,
+      ),
+    };
+  });
+
+  const totalCheckIns = habitSummaries.reduce(
+    (sum, entry) => sum + entry.total,
+    0,
+  );
+  const allCompletions = Array.from(
+    new Set(habits.flatMap((habit) => habit.completions)),
+  );
+  const overallStreaks = computeStreaks(allCompletions, todayKey);
+  const elapsedDays = getDaysActive(earliestCreated, today);
+
+  let perfectDays = 0;
+
+  for (let offset = 0; offset < elapsedDays; offset += 1) {
+    const date = addDays(earliestCreated, offset);
+    const key = formatDateKey(date);
+    const hasEligibleHabit = createdDates.some((created) => created <= date);
+
+    if (
+      hasEligibleHabit &&
+      habits.every(
+        (_, index) =>
+          createdDates[index] > date || completionSets[index].has(key),
+      )
+    ) {
+      perfectDays += 1;
+    }
+  }
+
+  const expectedCheckIns = habits.reduce(
+    (sum, habit, index) =>
+      sum +
+      (habit.target_per_week / 7) * getDaysActive(createdDates[index], today),
+    0,
+  );
+
+  return {
+    totalCheckIns,
+    activeDays: allCompletions.length,
+    perfectDays,
+    currentStreak: overallStreaks.current,
+    longestStreak: overallStreaks.longest,
+    completionRate: getCompletionRate(totalCheckIns, expectedCheckIns),
+    trackingSince,
+    habitSummaries,
   };
 };
 

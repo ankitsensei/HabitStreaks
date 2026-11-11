@@ -19,16 +19,16 @@ import {
 } from "../lib/habitOptions";
 
 const inputBase =
-  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14.5px] text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400/70 dark:focus:ring-brand-500/15";
+  "w-full rounded-xl border border-white/[0.08] bg-white/[0.06] px-4 py-3 text-[14.5px] text-[#f5f5f7] outline-none transition placeholder:text-[rgba(235,235,245,0.35)] focus:border-[#0A84FF] focus:ring-4 focus:ring-[#0A84FF]/25";
 
 const labelClass =
-  "block text-[12.5px] font-semibold text-slate-700 dark:text-slate-300";
+  "block text-[12.5px] font-semibold text-[rgba(235,235,245,0.7)]";
 
 const primaryButton =
-  "group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-fuchsia-600 px-5 py-3.5 text-[14.5px] font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:brightness-105 hover:shadow-xl hover:shadow-brand-600/30 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-brand-500/40 sm:w-auto";
+  "group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-5 py-3 text-[14.5px] font-semibold text-white shadow-[0_0_24px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
 const secondaryButton =
-  "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-[14px] font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-white/[0.07] dark:focus-visible:ring-white/10 sm:w-auto";
+  "inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.06] px-5 py-3 text-[14px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:w-auto";
 
 const Spinner = () => (
   <span
@@ -117,27 +117,27 @@ const NewHabit = () => {
   }
 
   return (
-    <div className="min-h-svh bg-[#f6f4fb] text-slate-900 dark:bg-[#0a0910] dark:text-slate-100">
+    <div className="min-h-svh bg-black text-[#f5f5f7]">
       <Navbar />
 
       <main className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-brand-300/30 blur-[120px] dark:bg-brand-600/20" />
-          <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-fuchsia-300/25 blur-[120px] dark:bg-fuchsia-600/15" />
+          <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/15 blur-[120px]" />
+          <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
         </div>
 
         <div className="relative mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
           <div className="animate-fade-up">
             <div className="mb-7">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white/80 px-3 py-1 text-[11.5px] font-semibold text-brand-700 shadow-sm backdrop-blur dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-200">
-                <SparkIcon className="h-3.5 w-3.5 text-fuchsia-500 dark:text-fuchsia-300" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
+                <SparkIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
                 New habit
               </span>
 
-              <h1 className="mt-4 text-[30px] font-extrabold tracking-tight text-slate-900 sm:text-[36px] dark:text-white">
+              <h1 className="mt-4 text-[30px] font-bold tracking-tight text-[#f5f5f7] sm:text-[36px]">
                 What do you want to build?
               </h1>
-              <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-slate-600 dark:text-slate-400">
+              <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                 Pick something specific, give it a weekly target, and make it
                 yours. You can always add more habits later.
               </p>
@@ -146,12 +146,12 @@ const NewHabit = () => {
             <form
               onSubmit={handleSubmit}
               noValidate
-              className="rounded-[26px] border border-white/80 bg-white/85 p-6 shadow-[0_30px_70px_-40px_rgba(76,29,149,0.45)] backdrop-blur-xl dark:border-white/10 dark:bg-[#111018]/85 sm:p-8"
+              className="rounded-[26px] border border-white/[0.08] bg-[#1c1c1e] p-6 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)] sm:p-8"
             >
               {error && (
                 <div
                   role="alert"
-                  className="mb-6 flex items-start gap-2.5 rounded-xl bg-rose-50 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20"
+                  className="mb-6 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
                 >
                   <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{error}</span>
@@ -160,7 +160,7 @@ const NewHabit = () => {
 
               <div className="space-y-7">
                 {/* Preview */}
-                <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4">
                   <span
                     aria-hidden="true"
                     className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-[24px]"
@@ -169,10 +169,10 @@ const NewHabit = () => {
                     {icon}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-[14.5px] font-bold text-slate-900 dark:text-white">
+                    <p className="truncate text-[14.5px] font-bold text-[#f5f5f7]">
                       {name.trim() || "Your new habit"}
                     </p>
-                    <p className="mt-0.5 text-[12px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[12px] text-[rgba(235,235,245,0.55)]">
                       {category} · {targetPerWeek}{" "}
                       {targetPerWeek === 1 ? "day" : "days"} per week
                     </p>
@@ -185,7 +185,7 @@ const NewHabit = () => {
                     <label htmlFor="habit-name" className={labelClass}>
                       Habit name
                     </label>
-                    <span className="text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+                    <span className="text-[11px] font-medium tabular-nums text-[rgba(235,235,245,0.4)]">
                       {name.length}/100
                     </span>
                   </div>
@@ -201,7 +201,7 @@ const NewHabit = () => {
                     onChange={(event) => setName(event.target.value)}
                     className={inputBase}
                   />
-                  <p className="mt-1.5 text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-[rgba(235,235,245,0.55)]">
                     Keep it specific — “Read 20 pages” is easier to keep than
                     “Read more”.
                   </p>
@@ -226,10 +226,10 @@ const NewHabit = () => {
                           aria-label={option.label}
                           aria-pressed={selected}
                           onClick={() => setIcon(option.emoji)}
-                          className={`grid h-11 w-11 place-items-center rounded-xl border text-[20px] transition focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-brand-500/25 ${
+                          className={`grid h-11 w-11 place-items-center rounded-[14px] border text-[20px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                             selected
-                              ? "border-brand-400 bg-brand-50 shadow-sm ring-2 ring-brand-200 dark:border-brand-400/60 dark:bg-brand-500/15 dark:ring-brand-500/25"
-                              : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-brand-400/30"
+                              ? "border-[#0A84FF] bg-[#0A84FF]/15 ring-2 ring-[#0A84FF]/30"
+                              : "border-white/[0.08] bg-white/[0.05] hover:-translate-y-0.5 hover:border-[#0A84FF]/40"
                           }`}
                         >
                           <span aria-hidden="true">{option.emoji}</span>
@@ -258,13 +258,13 @@ const NewHabit = () => {
                           aria-label={option.name}
                           aria-pressed={selected}
                           onClick={() => setColor(option.value)}
-                          className={`grid h-9 w-9 place-items-center rounded-full shadow-sm transition focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-brand-500/25 ${
+                          className={`grid h-9 w-9 place-items-center rounded-full shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                             isLightColor(option.value)
-                              ? "text-slate-900"
+                              ? "text-black"
                               : "text-white"
                           } ${
                             selected
-                              ? "ring-2 ring-slate-900 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-[#111018]"
+                              ? "ring-2 ring-white ring-offset-2 ring-offset-[#1c1c1e]"
                               : "hover:scale-110"
                           }`}
                           style={{ backgroundColor: option.value }}
@@ -291,10 +291,10 @@ const NewHabit = () => {
                       return (
                         <label
                           key={option}
-                          className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] font-semibold transition focus-within:ring-4 focus-within:ring-brand-200 dark:focus-within:ring-brand-500/25 ${
+                          className={`flex cursor-pointer items-center gap-2.5 rounded-[14px] border px-3.5 py-2.5 text-[13px] font-semibold transition focus-within:ring-2 focus-within:ring-[#0A84FF]/60 ${
                             selected
-                              ? "border-brand-400 bg-brand-50 text-brand-800 shadow-sm ring-2 ring-brand-200 dark:border-brand-400/60 dark:bg-brand-500/15 dark:text-brand-100 dark:ring-brand-500/25"
-                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-white/[0.07]"
+                              ? "border-[#0A84FF] bg-[#0A84FF]/15 text-white ring-2 ring-[#0A84FF]/30"
+                              : "border-white/[0.08] bg-white/[0.05] text-[rgba(235,235,245,0.8)] hover:border-white/[0.16] hover:bg-white/[0.08]"
                           }`}
                         >
                           <input
@@ -310,7 +310,7 @@ const NewHabit = () => {
                           </span>
                           <span>{option}</span>
                           {selected && (
-                            <CheckIcon className="ml-auto h-4 w-4 shrink-0" />
+                            <CheckIcon className="ml-auto h-4 w-4 shrink-0 text-[#409AFF]" />
                           )}
                         </label>
                       );
@@ -321,7 +321,7 @@ const NewHabit = () => {
                 {/* Targets per week */}
                 <fieldset>
                   <legend className={labelClass}>Targets per week</legend>
-                  <p className="mt-1 text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-[12px] leading-relaxed text-[rgba(235,235,245,0.55)]">
                     How many days a week do you want to do this?
                   </p>
                   <div className="mt-2 grid grid-cols-7 gap-2">
@@ -337,10 +337,10 @@ const NewHabit = () => {
                           } per week`}
                           aria-pressed={selected}
                           onClick={() => setTargetPerWeek(value)}
-                          className={`grid h-11 place-items-center rounded-xl border text-[14px] font-bold transition focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-brand-500/25 ${
+                          className={`grid h-11 place-items-center rounded-[14px] border text-[14px] font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                             selected
-                              ? "border-transparent bg-gradient-to-r from-brand-600 to-fuchsia-600 text-white shadow-md shadow-brand-600/25"
-                              : "border-slate-200 bg-white text-slate-600 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-brand-400/30 dark:hover:text-brand-200"
+                              ? "border-transparent bg-[#0A84FF] text-white shadow-[0_0_16px_rgba(10,132,255,0.4)]"
+                              : "border-white/[0.08] bg-white/[0.05] text-[rgba(235,235,245,0.8)] hover:border-[#0A84FF]/40 hover:text-[#409AFF]"
                           }`}
                         >
                           {value}
@@ -351,7 +351,7 @@ const NewHabit = () => {
                 </fieldset>
               </div>
 
-              <div className="mt-8 flex flex-col gap-3 border-t border-slate-200/70 pt-6 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-8 flex flex-col gap-3 border-t border-white/[0.08] pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <Link to="/" className={secondaryButton}>
                   Cancel
                 </Link>

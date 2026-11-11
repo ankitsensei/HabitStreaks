@@ -25,13 +25,13 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-[#f6f4fb]/85 backdrop-blur-xl dark:border-white/10 dark:bg-[#0a0910]/85">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-5">
+    <header className="sticky top-0 z-40 border-b border-white/[0.08] bg-black/75 backdrop-blur-2xl">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-5">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30">
-            <FlameIcon className="h-[18px] w-[18px]" />
+          <span className="grid h-8 w-8 place-items-center rounded-[10px] bg-[#0A84FF] text-white shadow-[0_0_18px_rgba(10,132,255,0.45)]">
+            <FlameIcon className="h-4 w-4" />
           </span>
-          <span className="hidden text-[16px] font-bold tracking-tight sm:inline">
+          <span className="hidden text-[15px] font-semibold tracking-tight text-[#f5f5f7] sm:inline">
             HabitStreaks
           </span>
         </Link>
@@ -40,7 +40,7 @@ const Navbar = () => {
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <nav
               aria-label="Main navigation"
-              className="flex items-center gap-0.5 rounded-full border border-slate-200/80 bg-white/70 p-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.04]"
+              className="flex items-center gap-0.5 rounded-full border border-white/[0.08] bg-white/[0.06] p-1 backdrop-blur"
             >
               {APP_LINKS.map(({ to, label, icon: Icon }) => (
                 <NavLink
@@ -49,10 +49,10 @@ const Navbar = () => {
                   title={label}
                   aria-label={label}
                   className={({ isActive }) =>
-                    `inline-flex items-center gap-1.5 rounded-full px-2.5 py-2 text-[12.5px] font-semibold transition focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 dark:focus-visible:ring-brand-500/25 ${
+                    `inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12.5px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                       isActive
-                        ? "bg-brand-50 text-brand-700 ring-1 ring-brand-200 dark:bg-brand-500/15 dark:text-brand-200 dark:ring-brand-400/25"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                        ? "bg-white/[0.14] text-white"
+                        : "text-[rgba(235,235,245,0.6)] hover:bg-white/[0.08] hover:text-white"
                     }`
                   }
                 >
@@ -66,7 +66,7 @@ const Navbar = () => {
               to="/newhabit"
               aria-label="New habit"
               title="New habit"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-600 to-fuchsia-600 px-2.5 py-2 text-[12.5px] font-semibold text-white shadow-md shadow-brand-600/25 transition hover:brightness-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300 dark:focus-visible:ring-brand-500/40 sm:px-4"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#0A84FF] px-2.5 py-1.5 text-[12.5px] font-semibold text-white shadow-[0_0_18px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 sm:px-4"
             >
               <SparkIcon className="h-4 w-4" />
               <span className="hidden md:inline">New habit</span>
@@ -77,37 +77,31 @@ const Navbar = () => {
               onClick={handleSignOut}
               aria-label="Sign out"
               title="Sign out"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 dark:hover:border-rose-500/30 dark:hover:bg-rose-500/10 dark:hover:text-rose-300 dark:focus-visible:ring-rose-500/20"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.06] text-[rgba(235,235,245,0.6)] transition hover:border-[#FF453A]/40 hover:bg-[#FF453A]/10 hover:text-[#FF453A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF453A]/40"
             >
               <LogoutIcon className="h-4 w-4" />
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <nav className="hidden items-center gap-7 text-[13px] font-medium text-slate-600 md:flex dark:text-slate-300">
-              <a
-                href="#features"
-                className="transition hover:text-brand-700 dark:hover:text-brand-300"
-              >
+            <nav className="hidden items-center gap-6 text-[13px] font-medium text-[rgba(235,235,245,0.6)] md:flex">
+              <a href="#features" className="transition hover:text-white">
                 Features
               </a>
-              <a
-                href="#how-it-works"
-                className="transition hover:text-brand-700 dark:hover:text-brand-300"
-              >
+              <a href="#how-it-works" className="transition hover:text-white">
                 How it works
               </a>
             </nav>
 
             <Link
               to="/login"
-              className="rounded-lg px-3 py-2 text-[13px] font-semibold text-slate-600 transition hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-white/10"
+              className="rounded-full px-3 py-1.5 text-[13px] font-medium text-[rgba(235,235,245,0.8)] transition hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             >
               Sign in
             </Link>
             <Link
               to="/register"
-              className="rounded-lg bg-gradient-to-r from-brand-600 to-fuchsia-600 px-4 py-2 text-[13px] font-semibold text-white shadow-md shadow-brand-600/25 transition hover:brightness-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-300"
+              className="rounded-full bg-[#0A84FF] px-4 py-1.5 text-[13px] font-semibold text-white transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
             >
               Get started
             </Link>
