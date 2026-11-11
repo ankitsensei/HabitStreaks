@@ -8,6 +8,7 @@ import {
   SparkIcon,
 } from "./Icons";
 import { useAuth } from "../lib/auth";
+import logo from "../assets/logo_dark.jpeg"
 
 const APP_LINKS = [
   { to: "/habits", label: "Calendar", icon: CalendarIcon },
@@ -28,9 +29,7 @@ const Navbar = () => {
     <header className="sticky top-0 z-40 border-b border-white/[0.08] bg-black/75 backdrop-blur-2xl">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-5">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-[10px] bg-[#0A84FF] text-white shadow-[0_0_18px_rgba(10,132,255,0.45)]">
-            <FlameIcon className="h-4 w-4" />
-          </span>
+          <img src={logo} alt="logo" className="grid h-8 w-8 place-items-center rounded-[10px] bg-[#0A84FF] text-white shadow-[0_0_18px_rgba(10,132,255,0.45)]" />
           <span className="hidden text-[15px] font-semibold tracking-tight text-[#f5f5f7] sm:inline">
             HabitStreaks
           </span>
