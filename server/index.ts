@@ -2,9 +2,9 @@ import express, { type Request, type Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import authRoutes from "./routes/auth.routes.ts";
-import habitRoutes from "./routes/habit.routes.ts";
-import verifyToken from "./middlewares/auth.middlewares.ts";
+import authRoutes from "./routes/auth.routes";
+import habitRoutes from "./routes/habit.routes";
+import verifyToken from "./middlewares/auth.middlewares";
 
 dotenv.config();
 
