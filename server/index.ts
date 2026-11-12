@@ -35,7 +35,10 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Routes
+// Root health check (app.get, not app.use — app.use("/") would swallow every request)
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).send("Hello from server");
+});
 app.use("/api/auth", authRoutes);
 app.use("/api/habits", verifyToken, habitRoutes);
 
