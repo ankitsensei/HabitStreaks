@@ -1,8 +1,8 @@
 import express, { type Request, type Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import db from "../config/db";
-import { sendOtpEmail } from "../src/utils/sendEmail";
+import db from "../config/db.ts";
+import { sendOtpEmail } from "../src/utils/sendEmail.ts";
 
 const router = express.Router();
 

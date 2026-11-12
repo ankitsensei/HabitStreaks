@@ -2,17 +2,27 @@ import express, { type Request, type Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import authRoutes from "./routes/auth.routes";
-import habitRoutes from "./routes/habit.routes";
-import verifyToken from "./middlewares/auth.middlewares";
+import authRoutes from "./routes/auth.routes.ts";
+import habitRoutes from "./routes/habit.routes.ts";
+import verifyToken from "./middlewares/auth.middlewares.ts";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const corsOrigin = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 const corsOptions: cors.CorsOptions = {
-  origin: ["https://habit-streaks-k22x.vercel.app"],
+  origin: [
+    ...corsOrigin,
+    "https://habit-streaks-snowy.vercel.app",
+    "https://habit-streaks-k22x.vercel.app",
+    "http://localhost:5173",
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
