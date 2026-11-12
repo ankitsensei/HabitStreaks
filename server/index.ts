@@ -6,6 +6,9 @@ import authRoutes from "./routes/auth.routes.ts";
 import habitRoutes from "./routes/habit.routes.ts";
 import verifyToken from "./middlewares/auth.middlewares.ts";
 
+// Load mode-specific env file first (.env.development / .env.production), then shared .env.
+// Existing values are not overridden, so the mode file wins.
+dotenv.config({ path: `.env.${process.env.NODE_ENV ?? "development"}` });
 dotenv.config();
 
 const app = express();
