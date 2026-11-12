@@ -7,7 +7,7 @@ import {
   SparkIcon,
 } from "./Icons";
 import { useAuth } from "../lib/auth";
-import logo from "../../public/logo_dark.jpeg";
+import logo from "../assets/logo_dark.jpeg";
 
 const APP_LINKS = [
   { to: "/habits", label: "Calendar", icon: CalendarIcon },

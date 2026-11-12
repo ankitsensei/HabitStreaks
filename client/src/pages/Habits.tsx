@@ -65,10 +65,7 @@ const formatDisplayDate = (date: Date) =>
 const getGraphRange = () => {
   const today = startOfDay(new Date());
   const startOfCurrentWeek = addDays(today, -today.getDay());
-  const start = addDays(
-    startOfCurrentWeek,
-    -(WEEKS_IN_GRAPH - 1) * 7,
-  );
+  const start = addDays(startOfCurrentWeek, -(WEEKS_IN_GRAPH - 1) * 7);
 
   return { start, today };
 };
@@ -131,10 +128,7 @@ const HabitGraph = ({
                 const firstOfMonth = week.find((day) => day.getDate() === 1);
 
                 return (
-                  <span
-                    key={weekIndex}
-                    className="relative h-3 w-3 shrink-0"
-                  >
+                  <span key={weekIndex} className="relative h-3 w-3 shrink-0">
                     {firstOfMonth && (
                       <span className="absolute left-0 top-0 whitespace-nowrap text-[9px] font-medium text-[rgba(235,235,245,0.4)]">
                         {MONTHS[firstOfMonth.getMonth()]}
@@ -159,9 +153,7 @@ const HabitGraph = ({
                         key={dateKey}
                         type="button"
                         disabled={isFuture || isPending}
-                        onClick={() =>
-                          onToggle(habit, dateKey, isCompleted)
-                        }
+                        onClick={() => onToggle(habit, dateKey, isCompleted)}
                         title={`${formatDisplayDate(day)} · ${
                           isCompleted ? "Done" : "Not done"
                         }`}
@@ -189,16 +181,6 @@ const HabitGraph = ({
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] font-medium text-[rgba(235,235,245,0.4)]">
-        Less
-        <span className="h-[9px] w-[9px] rounded-[2px] bg-white/[0.08]" />
-        <span
-          className="h-[9px] w-[9px] rounded-[2px]"
-          style={{ backgroundColor: habit.color }}
-        />
-        More
       </div>
     </div>
   );
@@ -287,16 +269,15 @@ const Habits = () => {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const pendingRef = useRef<Set<string>>(new Set());
-  const [editingHabit, setEditingHabit] =
-    useState<HabitWithCompletions | null>(null);
+  const [editingHabit, setEditingHabit] = useState<HabitWithCompletions | null>(
+    null,
+  );
   const [notice, setNotice] = useState<{
     kind: "added" | "updated";
     name: string;
   } | null>(() => {
     const state = location.state as { addedHabit?: string } | null;
-    return state?.addedHabit
-      ? { kind: "added", name: state.addedHabit }
-      : null;
+    return state?.addedHabit ? { kind: "added", name: state.addedHabit } : null;
   });
 
   useEffect(() => {
@@ -483,7 +464,10 @@ const Habits = () => {
       <Navbar />
 
       <main className="relative overflow-hidden">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+        >
           <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/15 blur-[120px]" />
           <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
         </div>
