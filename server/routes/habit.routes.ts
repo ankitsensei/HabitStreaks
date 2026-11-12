@@ -1,3 +1,4 @@
+/// <reference path="../src/types/express.d.ts" />
 import express, { type Request, type Response } from "express";
 import db from "../config/db.ts";
 
