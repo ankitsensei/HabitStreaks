@@ -36,7 +36,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Root health check (app.get, not app.use — app.use("/") would swallow every request)
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.status(200).send("Hello from server");
 });
 app.use("/api/auth", authRoutes);
