@@ -31,15 +31,6 @@ const MONTHS = [
   "Dec",
 ];
 const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
-const WEEKDAY_NAMES = [
-  "Sun",
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-];
 
 const primaryButton =
   "inline-flex items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60";
@@ -67,6 +58,9 @@ const formatDisplayDate = (date: Date) =>
     day: "numeric",
     year: "numeric",
   });
+
+const formatShortDate = (date: Date) =>
+  date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
 const getGraphRange = () => {
   const today = startOfDay(new Date());
@@ -192,7 +186,11 @@ const HabitGraph = ({
   );
 };
 
-const RECENT_DAY_COUNT = 7;
+// Large screens show a 2-week window of boxes, small screens only the
+// latest week. The extra week collapses with responsive classes, so the
+// shared date header and the box rows stay perfectly aligned.
+const RECENT_DAY_COUNT = 14;
+const SMALL_SCREEN_DAY_COUNT = 7;
 
 interface RecentDay {
   key: string;
@@ -288,89 +286,121 @@ const WeekStreaksSection = ({
         Week streaks
       </span>
       <span className="text-[10.5px] text-[rgba(235,235,245,0.35)]">
-        Last 7 days
+        Last 2 weeks
       </span>
     </div>
 
-    {rows.map((row, index) => (
-      <div
-        key={row.habit.id}
-        className={`flex items-center gap-2.5 px-2 py-2 ${
-          index > 0 ? "border-t border-white/[0.06]" : ""
-        }`}
-      >
-        <span
-          aria-hidden="true"
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-sm"
-          style={{ backgroundColor: `${row.habit.color}1f` }}
-        >
-          {row.habit.icon}
-        </span>
+    <div className="flex">
+      <div className="w-36 shrink-0 sm:w-44">
+        {/* Spacer keeps the habit rows aligned with the shared date header */}
+        <div aria-hidden="true" className="h-4 shrink-0" />
 
-        <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-[#f5f5f7]">
-          {row.habit.name}
-        </p>
-
-        {row.weekStreak > 0 && (
-          <span
-            title={`${row.weekStreak} week streak`}
-            className="shrink-0 rounded-full bg-[#FF9F0A]/10 px-2 py-0.5 text-[10.5px] font-semibold text-[#FF9F0A]"
+        {rows.map((row, index) => (
+          <div
+            key={row.habit.id}
+            className={`flex h-9 items-center gap-2 px-2 ${
+              index > 0 ? "border-t border-white/[0.06]" : ""
+            }`}
           >
-            {row.weekStreak}w
-          </span>
-        )}
+            <span
+              aria-hidden="true"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-sm"
+              style={{ backgroundColor: `${row.habit.color}1f` }}
+            >
+              {row.habit.icon}
+            </span>
 
-        <div className="flex shrink-0 gap-[4px]">
-          {row.days.map((day) => {
-            const isPending = pending.has(`${row.habit.id}:${day.key}`);
+            <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-[#f5f5f7]">
+              {row.habit.name}
+            </p>
 
-            return (
-              <div
-                key={day.key}
-                className="flex flex-col items-center gap-[3px]"
+            {row.weekStreak > 0 && (
+              <span
+                title={`${row.weekStreak} week streak`}
+                className="shrink-0 rounded-full bg-[#FF9F0A]/10 px-2 py-0.5 text-[10.5px] font-semibold text-[#FF9F0A]"
               >
-                <span
-                  className={`text-[9px] font-medium leading-none ${
-                    day.isToday
-                      ? "text-[#0A84FF]"
-                      : "text-[rgba(235,235,245,0.4)]"
-                  }`}
-                >
-                  {WEEKDAY_NAMES[day.date.getDay()]}
-                </span>
+                {row.weekStreak}w
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
 
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() =>
-                    onToggle(row.habit, day.key, day.isCompleted)
-                  }
-                  title={`${formatDisplayDate(day.date)} · ${
-                    day.isCompleted ? "Done" : "Not done"
-                  }`}
-                  aria-label={`${formatDisplayDate(day.date)}: ${
-                    day.isCompleted ? "done" : "not done"
-                  }${day.isToday ? " (today)" : ""}`}
-                  aria-pressed={day.isCompleted}
-                  className={`h-6 w-6 rounded-[2px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1c1c1e] ${
-                    day.isCompleted
-                      ? "hover:brightness-110"
-                      : "bg-white/[0.08] hover:bg-white/[0.18]"
-                  } ${day.isToday ? "ring-1 ring-white/40" : ""} ${
-                    isPending ? "animate-pulse" : ""
-                  }`}
-                  style={
-                    day.isCompleted
-                      ? { backgroundColor: row.habit.color }
-                      : undefined
-                  }
-                />
-              </div>
-            );
-          })}
+      <div className="min-w-0 flex-1 overflow-x-auto pb-1">
+        <div className="w-max px-2">
+          {/* One shared heading of dates for every habit row */}
+          <div className="flex h-4 items-end gap-[2px]">
+            {(rows[0]?.days ?? []).map((day, dayIndex) => (
+              <span
+                key={day.key}
+                className={`w-8 shrink-0 text-center text-[9px] font-medium leading-none ${
+                  dayIndex < RECENT_DAY_COUNT - SMALL_SCREEN_DAY_COUNT
+                    ? "hidden sm:block"
+                    : ""
+                } ${
+                  day.isToday
+                    ? "text-[#0A84FF]"
+                    : "text-[rgba(235,235,245,0.4)]"
+                }`}
+              >
+                {formatShortDate(day.date)}
+              </span>
+            ))}
+          </div>
+
+          {rows.map((row, index) => (
+            <div
+              key={row.habit.id}
+              className={`flex h-9 items-center gap-[2px] ${
+                index > 0 ? "border-t border-white/[0.06]" : ""
+              }`}
+            >
+              {row.days.map((day, dayIndex) => {
+                const isPending = pending.has(`${row.habit.id}:${day.key}`);
+                const hideOnSmall =
+                  dayIndex < RECENT_DAY_COUNT - SMALL_SCREEN_DAY_COUNT;
+
+                return (
+                  <span
+                    key={day.key}
+                    className={`w-8 shrink-0 justify-center ${
+                      hideOnSmall ? "hidden sm:flex" : "flex"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() =>
+                        onToggle(row.habit, day.key, day.isCompleted)
+                      }
+                      title={`${formatDisplayDate(day.date)} · ${
+                        day.isCompleted ? "Done" : "Not done"
+                      }`}
+                      aria-label={`${formatDisplayDate(day.date)}: ${
+                        day.isCompleted ? "done" : "not done"
+                      }${day.isToday ? " (today)" : ""}`}
+                      aria-pressed={day.isCompleted}
+                      className={`h-6 w-6 rounded-[2px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1c1c1e] ${
+                        day.isCompleted
+                          ? "hover:brightness-110"
+                          : "bg-white/[0.08] hover:bg-white/[0.18]"
+                      } ${day.isToday ? "ring-1 ring-white/40" : ""} ${
+                        isPending ? "animate-pulse" : ""
+                      }`}
+                      style={
+                        day.isCompleted
+                          ? { backgroundColor: row.habit.color }
+                          : undefined
+                      }
+                    />
+                  </span>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
-    ))}
+    </div>
   </section>
 );
 
