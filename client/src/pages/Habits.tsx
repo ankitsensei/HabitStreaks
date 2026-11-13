@@ -192,9 +192,10 @@ const HabitGraph = ({
 // many day boxes as fit — it never scrolls. Today is always the last box.
 const MAX_RECENT_DAYS = 30;
 const MIN_RECENT_DAYS = 5;
-// Column width (w-7 / w-8) plus the 2px gap between columns.
-const DAY_STEP_SMALL = 30;
-const DAY_STEP_LARGE = 34;
+// Column width (w-7) plus the 2px gap between columns. One spacing for
+// every screen size, so the gaps look identical on phones, tablets and
+// desktops.
+const DAY_STEP = 30;
 
 interface RecentDay {
   key: string;
@@ -288,10 +289,7 @@ const useRecentDayCount = () => {
     }
 
     const compute = () => {
-      const width = container.clientWidth;
-      const step =
-        window.innerWidth < 640 ? DAY_STEP_SMALL : DAY_STEP_LARGE;
-      const fitting = Math.floor((width - 12) / step);
+      const fitting = Math.floor((container.clientWidth - 12) / DAY_STEP);
 
       setDayCount(
         Math.min(MAX_RECENT_DAYS, Math.max(MIN_RECENT_DAYS, fitting)),
@@ -302,11 +300,9 @@ const useRecentDayCount = () => {
 
     const observer = new ResizeObserver(compute);
     observer.observe(container);
-    window.addEventListener("resize", compute);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", compute);
     };
   }, []);
 
@@ -380,7 +376,7 @@ const WeekStreaksSection = ({
             {(rows[0]?.days ?? []).slice(-dayCount).map((day) => (
               <span
                 key={day.key}
-                className="flex h-8 w-7 shrink-0 items-end justify-center sm:w-8"
+                className="flex h-8 w-7 shrink-0 items-end justify-center"
               >
                 <span
                   className={`whitespace-nowrap text-[9px] font-medium leading-none [writing-mode:vertical-rl] rotate-180 ${
@@ -408,7 +404,7 @@ const WeekStreaksSection = ({
                 return (
                   <span
                     key={day.key}
-                    className="flex w-7 shrink-0 justify-center sm:w-8"
+                    className="flex w-7 shrink-0 justify-center"
                   >
                     <button
                       type="button"
