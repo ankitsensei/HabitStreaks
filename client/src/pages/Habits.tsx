@@ -111,7 +111,7 @@ const HabitGraph = ({
   );
 
   return (
-    <div className="mt-3">
+    <div className="mt-2.5">
       <div className="flex gap-2">
         <div className="flex shrink-0 flex-col gap-[3px] pt-4 text-[9px] font-medium text-[rgba(235,235,245,0.4)]">
           {DAY_LABELS.map((label, index) => (
@@ -280,7 +280,7 @@ const WeekStreaksSection = ({
   pending,
   onToggle,
 }: WeekStreaksSectionProps) => (
-  <section className="mt-6 mb-6 rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-2 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+  <section className="mt-4 mb-3 rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-2 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
     <div className="flex items-center justify-between px-2 pb-1 pt-1.5">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgba(235,235,245,0.45)]">
         Week streaks
@@ -291,20 +291,20 @@ const WeekStreaksSection = ({
     </div>
 
     <div className="flex">
-      <div className="w-36 shrink-0 sm:w-44">
+      <div className="w-28 shrink-0 sm:w-44">
         {/* Spacer keeps the habit rows aligned with the shared date header */}
         <div aria-hidden="true" className="h-4 shrink-0" />
 
         {rows.map((row, index) => (
           <div
             key={row.habit.id}
-            className={`flex h-9 items-center gap-2 px-2 ${
+            className={`flex h-8 items-center gap-1.5 px-2 ${
               index > 0 ? "border-t border-white/[0.06]" : ""
             }`}
           >
             <span
               aria-hidden="true"
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-sm"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[13px]"
               style={{ backgroundColor: `${row.habit.color}1f` }}
             >
               {row.habit.icon}
@@ -333,7 +333,7 @@ const WeekStreaksSection = ({
             {(rows[0]?.days ?? []).map((day, dayIndex) => (
               <span
                 key={day.key}
-                className={`w-8 shrink-0 text-center text-[9px] font-medium leading-none ${
+                className={`w-7 shrink-0 text-center text-[9px] font-medium leading-none sm:w-8 ${
                   dayIndex < RECENT_DAY_COUNT - SMALL_SCREEN_DAY_COUNT
                     ? "hidden sm:block"
                     : ""
@@ -351,7 +351,7 @@ const WeekStreaksSection = ({
           {rows.map((row, index) => (
             <div
               key={row.habit.id}
-              className={`flex h-9 items-center gap-[2px] ${
+              className={`flex h-8 items-center gap-[2px] ${
                 index > 0 ? "border-t border-white/[0.06]" : ""
               }`}
             >
@@ -363,7 +363,7 @@ const WeekStreaksSection = ({
                 return (
                   <span
                     key={day.key}
-                    className={`w-8 shrink-0 justify-center ${
+                    className={`w-7 shrink-0 justify-center sm:w-8 ${
                       hideOnSmall ? "hidden sm:flex" : "flex"
                     }`}
                   >
@@ -419,11 +419,11 @@ const HabitCard = ({
   pending,
   onToggle,
 }: HabitCardProps) => (
-  <article className="rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-3.5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-4">
-    <div className="flex items-center gap-3">
+  <article className="rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-3 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-3.5">
+    <div className="flex items-center gap-2.5">
       <span
         aria-hidden="true"
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-lg"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-[17px]"
         style={{ backgroundColor: `${habit.color}1f` }}
       >
         {habit.icon}
@@ -644,18 +644,18 @@ const Habits = () => {
           <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
         </div>
 
-        <div className="relative mx-auto w-full max-w-5xl px-5 py-10 sm:py-14">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative mx-auto w-full max-w-5xl px-4 py-6 sm:px-5 sm:py-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
                 <SparkIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
                 Your habits
               </span>
 
-              <h1 className="mt-4 text-[30px] font-bold tracking-tight text-[#f5f5f7] sm:text-[36px]">
+              <h1 className="mt-3 text-[26px] font-bold tracking-tight text-[#f5f5f7] sm:text-[30px]">
                 Your year in habits
               </h1>
-              <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
+              <p className="mt-1.5 max-w-xl text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                 Every square is a day from the last 12 months. Click an empty
                 square to mark it done, or click a filled square to undo it.
               </p>
@@ -670,7 +670,7 @@ const Habits = () => {
           {notice && (
             <div
               role="status"
-              className="mt-6 flex items-start gap-2.5 rounded-xl bg-[#30D158]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#30D158] ring-1 ring-[#30D158]/25"
+              className="mt-4 flex items-start gap-2.5 rounded-xl bg-[#30D158]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#30D158] ring-1 ring-[#30D158]/25"
             >
               <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span className="flex-1">
@@ -697,7 +697,7 @@ const Habits = () => {
           {error && (
             <div
               role="alert"
-              className="mt-6 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
+              className="mt-4 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
             >
               <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
@@ -705,12 +705,12 @@ const Habits = () => {
           )}
 
           {isLoading ? (
-            <div className="mt-8 flex items-center justify-center gap-3 rounded-[22px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-16 text-[13px] font-medium text-[rgba(235,235,245,0.6)]">
+            <div className="mt-4 flex items-center justify-center gap-3 rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-10 text-[13px] font-medium text-[rgba(235,235,245,0.6)]">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-[#0A84FF]" />
               Loading your habits…
             </div>
           ) : habits.length === 0 ? (
-            <div className="mt-8 rounded-[26px] border border-dashed border-white/15 bg-white/[0.02] px-6 py-14 text-center">
+            <div className="mt-4 rounded-[22px] border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center">
               <span className="mx-auto grid h-12 w-12 place-items-center rounded-[14px] bg-[#0A84FF]/10 text-[#409AFF] ring-1 ring-[#0A84FF]/20">
                 <SparkIcon className="h-6 w-6" />
               </span>
@@ -721,7 +721,7 @@ const Habits = () => {
                 Create your first habit and its yearly graph will appear here
                 automatically.
               </p>
-              <Link to="/newhabit" className={`${primaryButton} mt-6`}>
+              <Link to="/newhabit" className={`${primaryButton} mt-5`}>
                 Create your first habit
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
