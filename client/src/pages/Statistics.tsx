@@ -153,7 +153,7 @@ const SegmentedControl = ({ value, onChange }: SegmentedControlProps) => (
           type="button"
           onClick={() => onChange(item.id)}
           aria-pressed={isActive}
-          className={`flex-1 rounded-full px-2.5 py-1.5 text-[12px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 sm:flex-none sm:px-3.5 ${
+          className={`flex-1 rounded-full px-2 py-1 text-[11px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 sm:flex-none sm:px-3.5 sm:py-1.5 sm:text-[12px] ${
             isActive
               ? "bg-white/[0.14] text-white"
               : "text-[rgba(235,235,245,0.6)] hover:bg-white/[0.08] hover:text-white"
@@ -181,20 +181,20 @@ const RangeNavigator = ({
   onPrevious,
   onNext,
 }: RangeNavigatorProps) => (
-  <div className="flex justify-center">
-    <div className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-white/[0.08] bg-white/[0.06] px-1 py-1">
+  <div className="flex sm:justify-center">
+    <div className="flex w-full items-center justify-between rounded-full border border-white/[0.08] bg-white/[0.06] px-1 py-1 sm:inline-flex sm:w-auto">
       <button
         type="button"
         onClick={onPrevious}
         aria-label={`Previous ${periodLabel}`}
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[#0A84FF] transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[#0A84FF] transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50 sm:h-7 sm:w-7"
       >
-        <ChevronLeftIcon className="h-4 w-4" />
+        <ChevronLeftIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </button>
 
       <p
         aria-live="polite"
-        className="whitespace-nowrap px-1.5 text-center text-[12px] font-medium text-[rgba(235,235,245,0.75)]"
+        className="min-w-0 flex-1 truncate px-1.5 text-center text-[11.5px] font-medium text-[rgba(235,235,245,0.75)] sm:flex-none sm:text-[12px]"
       >
         {label}
       </p>
@@ -204,9 +204,9 @@ const RangeNavigator = ({
         onClick={onNext}
         disabled={isAtCurrent}
         aria-label={`Next ${periodLabel}`}
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[#0A84FF] transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50 disabled:cursor-not-allowed disabled:text-[rgba(235,235,245,0.25)] disabled:hover:bg-transparent"
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[#0A84FF] transition hover:bg-white/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50 disabled:cursor-not-allowed disabled:text-[rgba(235,235,245,0.25)] disabled:hover:bg-transparent sm:h-7 sm:w-7"
       >
-        <ChevronRightIcon className="h-4 w-4" />
+        <ChevronRightIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </button>
     </div>
   </div>
@@ -464,7 +464,7 @@ const InitialError = ({ message, onRetry }: InitialErrorProps) => (
     <button
       type="button"
       onClick={onRetry}
-      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
+      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
     >
       Try again
     </button>
@@ -1024,7 +1024,7 @@ const Statistics = () => {
             </p>
             <Link
               to="/newhabit"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
             >
               <SparkIcon className="h-4 w-4" />
               Create your first habit
@@ -1059,7 +1059,7 @@ const Statistics = () => {
                     {chartSubtitle}
                   </p>
                 </div>
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
                   <RangeNavigator
                     label={rangeLabel}
                     periodLabel={periodLabel}
