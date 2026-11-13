@@ -7,11 +7,7 @@ import {
   SparkIcon,
 } from "../components/Icons";
 import Navbar from "../components/Navbar";
-import {
-  ApiError,
-  getHabits,
-  toggleHabitCompletion,
-} from "../lib/api";
+import { ApiError, getHabits, toggleHabitCompletion } from "../lib/api";
 import type { HabitWithCompletions } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
 
@@ -60,7 +56,7 @@ const formatDisplayDate = (date: Date) =>
   });
 
 const formatShortDate = (date: Date) =>
-  date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
 const getGraphRange = () => {
   const today = startOfDay(new Date());
@@ -111,7 +107,7 @@ const HabitGraph = ({
   );
 
   return (
-    <div className="mt-2.5">
+    <div className="mt-2">
       <div className="flex gap-2">
         <div className="flex shrink-0 flex-col gap-[3px] pt-4 text-[9px] font-medium text-[rgba(235,235,245,0.4)]">
           {DAY_LABELS.map((label, index) => (
@@ -280,8 +276,8 @@ const WeekStreaksSection = ({
   pending,
   onToggle,
 }: WeekStreaksSectionProps) => (
-  <section className="mt-4 mb-3 rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-2 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
-    <div className="flex items-center justify-between px-2 pb-1 pt-1.5">
+  <section className="mt-4 mb-3 w-full max-w-full rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-1.5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+    <div className="flex items-center justify-between gap-6 px-1.5 pb-1 pt-0.5">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgba(235,235,245,0.45)]">
         Week streaks
       </span>
@@ -291,14 +287,14 @@ const WeekStreaksSection = ({
     </div>
 
     <div className="flex">
-      <div className="w-28 shrink-0 sm:w-44">
+      <div className="w-28 shrink-0 sm:w-40">
         {/* Spacer keeps the habit rows aligned with the shared date header */}
-        <div aria-hidden="true" className="h-4 shrink-0" />
+        <div aria-hidden="true" className="h-8 shrink-0" />
 
         {rows.map((row, index) => (
           <div
             key={row.habit.id}
-            className={`flex h-8 items-center gap-1.5 px-2 ${
+            className={`flex h-8 items-center gap-1.5 px-1.5 ${
               index > 0 ? "border-t border-white/[0.06]" : ""
             }`}
           >
@@ -326,26 +322,33 @@ const WeekStreaksSection = ({
         ))}
       </div>
 
-      <div className="min-w-0 flex-1 overflow-x-auto pb-1">
-        <div className="w-max px-2">
+      <div className="min-w-0 overflow-x-auto pb-1">
+        <div className="w-max px-1.5">
           {/* One shared heading of dates for every habit row */}
-          <div className="flex h-4 items-end gap-[2px]">
-            {(rows[0]?.days ?? []).map((day, dayIndex) => (
-              <span
-                key={day.key}
-                className={`w-7 shrink-0 text-center text-[9px] font-medium leading-none sm:w-8 ${
-                  dayIndex < RECENT_DAY_COUNT - SMALL_SCREEN_DAY_COUNT
-                    ? "hidden sm:block"
-                    : ""
-                } ${
-                  day.isToday
-                    ? "text-[#0A84FF]"
-                    : "text-[rgba(235,235,245,0.4)]"
-                }`}
-              >
-                {formatShortDate(day.date)}
-              </span>
-            ))}
+          <div className="flex h-8 items-end gap-[2px]">
+            {(rows[0]?.days ?? []).map((day, dayIndex) => {
+              const hideOnSmall =
+                dayIndex < RECENT_DAY_COUNT - SMALL_SCREEN_DAY_COUNT;
+
+              return (
+                <span
+                  key={day.key}
+                  className={`h-8 w-7 shrink-0 items-end justify-center sm:w-8 ${
+                    hideOnSmall ? "hidden sm:flex" : "flex"
+                  }`}
+                >
+                  <span
+                    className={`whitespace-nowrap text-[9px] font-medium leading-none [writing-mode:vertical-rl] rotate-180 ${
+                      day.isToday
+                        ? "text-[#0A84FF]"
+                        : "text-[rgba(235,235,245,0.4)]"
+                    }`}
+                  >
+                    {formatShortDate(day.date)}
+                  </span>
+                </span>
+              );
+            })}
           </div>
 
           {rows.map((row, index) => (
@@ -419,11 +422,11 @@ const HabitCard = ({
   pending,
   onToggle,
 }: HabitCardProps) => (
-  <article className="rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-3 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-3.5">
-    <div className="flex items-center gap-2.5">
+  <article className="rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-2.5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-3">
+    <div className="flex items-center gap-2">
       <span
         aria-hidden="true"
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-[17px]"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[15px]"
         style={{ backgroundColor: `${habit.color}1f` }}
       >
         {habit.icon}
@@ -644,7 +647,7 @@ const Habits = () => {
           <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
         </div>
 
-        <div className="relative mx-auto w-full max-w-5xl px-4 py-6 sm:px-5 sm:py-8">
+        <div className="relative mx-auto lg:w-fit max-w-5xl px-4 py-6 sm:px-5 sm:py-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
@@ -734,7 +737,7 @@ const Habits = () => {
                 onToggle={handleToggle}
               />
 
-              <div className="mt-3 space-y-3">
+              <div className="mt-3 space-y-2.5">
                 {habits.map((habit) => (
                   <HabitCard
                     key={habit.id}
