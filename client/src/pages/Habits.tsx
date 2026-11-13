@@ -675,15 +675,7 @@ const Habits = () => {
     <div className="min-h-svh bg-black text-[#f5f5f7]">
       <Navbar />
 
-      <main className="relative overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-        >
-          <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/15 blur-[120px]" />
-          <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
-        </div>
-
+      <main>
         <div className="relative mx-auto lg:w-fit max-w-5xl px-4 py-6 sm:px-5 sm:py-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>

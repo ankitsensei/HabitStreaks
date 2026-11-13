@@ -292,12 +292,7 @@ const Manage = () => {
     <div className="min-h-svh bg-black text-[#f5f5f7]">
       <Navbar />
 
-      <main className="relative overflow-hidden">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/15 blur-[120px]" />
-          <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
-        </div>
-
+      <main>
         <div className="relative mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
             <SlidersIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />

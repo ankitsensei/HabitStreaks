@@ -22,7 +22,7 @@ interface EditHabitModalProps {
 }
 
 const inputBase =
-  "w-full rounded-xl border border-white/[0.08] bg-white/[0.06] px-4 py-3 text-[14.5px] text-[#f5f5f7] outline-none transition placeholder:text-[rgba(235,235,245,0.35)] focus:border-[#0A84FF] focus:ring-4 focus:ring-[#0A84FF]/25";
+  "w-full rounded-xl border border-white/[0.08] bg-white/[0.06] px-3.5 py-2.5 text-[14px] text-[#f5f5f7] outline-none transition placeholder:text-[rgba(235,235,245,0.35)] focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/25";
 
 const labelClass =
   "block text-[12.5px] font-semibold text-[rgba(235,235,245,0.7)]";
@@ -107,23 +107,22 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-[26px] border border-white/[0.08] bg-[#1c1c1e] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:max-w-2xl sm:rounded-[26px]"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-white/[0.08] bg-[#1c1c1e] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] sm:max-w-lg sm:rounded-2xl"
       >
-        <div className="flex items-start gap-4 border-b border-white/[0.08] px-6 py-5">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[#0A84FF] text-white shadow-[0_0_20px_rgba(10,132,255,0.4)]">
-            <PencilIcon className="h-5 w-5" />
+        <div className="flex items-start gap-3 border-b border-white/[0.08] px-5 py-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0A84FF] text-white">
+            <PencilIcon className="h-4 w-4" />
           </span>
 
           <div className="min-w-0 flex-1">
             <h2
               id={titleId}
-              className="text-[18px] font-bold tracking-tight text-[#f5f5f7]"
+              className="text-[16px] font-bold tracking-tight text-[#f5f5f7]"
             >
               Edit habit
             </h2>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-[rgba(235,235,245,0.55)]">
-              Update the name, look, category, or weekly target. Your
-              completion history stays untouched.
+            <p className="mt-0.5 text-[12px] leading-relaxed text-[rgba(235,235,245,0.55)]">
+              Your completion history stays untouched.
             </p>
           </div>
 
@@ -137,28 +136,28 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="px-6 py-5">
+        <form onSubmit={handleSubmit} noValidate className="px-5 py-4">
           {error && (
             <div
               role="alert"
-              className="mb-5 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
+              className="mb-4 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
             >
               <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3">
               <span
                 aria-hidden="true"
-                className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-[24px]"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[20px]"
                 style={{ backgroundColor: `${color}1f`, color }}
               >
                 {icon}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-[14.5px] font-bold text-[#f5f5f7]">
+                <p className="truncate text-[14px] font-bold text-[#f5f5f7]">
                   {name.trim() || "Your habit"}
                 </p>
                 <p className="mt-0.5 text-[12px] text-[rgba(235,235,245,0.55)]">
@@ -196,7 +195,7 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
               <div
                 role="group"
                 aria-label="Habit icon"
-                className="mt-2 flex flex-wrap gap-1.5"
+                className="mt-2 flex flex-wrap gap-2"
               >
                 {ICON_OPTIONS.map((option) => {
                   const selected = icon === option.emoji;
@@ -209,10 +208,10 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
                       aria-label={option.label}
                       aria-pressed={selected}
                       onClick={() => setIcon(option.emoji)}
-                      className={`grid h-10 w-10 place-items-center rounded-[12px] border text-[18px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
+                      className={`grid h-9 w-9 place-items-center rounded-lg border text-[16px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                         selected
-                          ? "border-[#0A84FF] bg-[#0A84FF]/15 ring-2 ring-[#0A84FF]/30"
-                          : "border-white/[0.08] bg-white/[0.05] hover:-translate-y-0.5 hover:border-[#0A84FF]/40"
+                          ? "border-[#0A84FF] bg-[#0A84FF]/15"
+                          : "border-white/[0.08] bg-white/[0.05] hover:border-[#0A84FF]/40"
                       }`}
                     >
                       <span aria-hidden="true">{option.emoji}</span>
@@ -227,7 +226,7 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
               <div
                 role="group"
                 aria-label="Habit color"
-                className="mt-2 flex flex-wrap gap-2.5"
+                className="mt-2 flex flex-wrap gap-2"
               >
                 {COLOR_OPTIONS.map((option) => {
                   const selected = color === option.value;
@@ -240,7 +239,7 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
                       aria-label={option.name}
                       aria-pressed={selected}
                       onClick={() => setColor(option.value)}
-                      className={`grid h-8 w-8 place-items-center rounded-full shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
+                      className={`grid h-8 w-8 place-items-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                         isLightColor(option.value)
                           ? "text-black"
                           : "text-white"
@@ -269,9 +268,9 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
                   return (
                     <label
                       key={option}
-                      className={`flex cursor-pointer items-center gap-2.5 rounded-[14px] border px-3.5 py-2.5 text-[13px] font-semibold transition focus-within:ring-2 focus-within:ring-[#0A84FF]/60 ${
+                      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-[12.5px] font-semibold transition focus-within:ring-2 focus-within:ring-[#0A84FF]/60 ${
                         selected
-                          ? "border-[#0A84FF] bg-[#0A84FF]/15 text-white ring-2 ring-[#0A84FF]/30"
+                          ? "border-[#0A84FF] bg-[#0A84FF]/15 text-white"
                           : "border-white/[0.08] bg-white/[0.05] text-[rgba(235,235,245,0.8)] hover:border-white/[0.16] hover:bg-white/[0.08]"
                       }`}
                     >
@@ -283,13 +282,10 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
                         onChange={() => setCategory(option)}
                         className="sr-only"
                       />
-                      <span aria-hidden="true" className="text-[15px]">
+                      <span aria-hidden="true" className="text-[14px]">
                         {CATEGORY_ICONS[option]}
                       </span>
                       <span>{option}</span>
-                      {selected && (
-                        <CheckIcon className="ml-auto h-4 w-4 shrink-0 text-[#409AFF]" />
-                      )}
                     </label>
                   );
                 })}
@@ -311,9 +307,9 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
                       } per week`}
                       aria-pressed={selected}
                       onClick={() => setTargetPerWeek(value)}
-                      className={`grid h-10 place-items-center rounded-[12px] border text-[14px] font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
+                      className={`grid h-9 place-items-center rounded-lg border text-[13.5px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                         selected
-                          ? "border-transparent bg-[#0A84FF] text-white shadow-[0_0_16px_rgba(10,132,255,0.4)]"
+                          ? "border-transparent bg-[#0A84FF] text-white"
                           : "border-white/[0.08] bg-white/[0.05] text-[rgba(235,235,245,0.8)] hover:border-[#0A84FF]/40 hover:text-[#409AFF]"
                       }`}
                     >
@@ -325,18 +321,18 @@ const EditHabitModal = ({ habit, onClose, onSave }: EditHabitModalProps) => {
             </fieldset>
           </div>
 
-          <div className="mt-7 flex flex-col-reverse gap-3 border-t border-white/[0.08] pt-5 sm:flex-row sm:items-center sm:justify-end">
+          <div className="mt-5 flex flex-col-reverse gap-3 border-t border-white/[0.08] pt-4 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.06] px-5 py-2.5 text-[13.5px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              className="inline-flex items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.06] px-5 py-2 text-[13px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_0_24px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? (
                 <>

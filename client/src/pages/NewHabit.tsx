@@ -19,16 +19,16 @@ import {
 } from "../lib/habitOptions";
 
 const inputBase =
-  "w-full rounded-xl border border-white/[0.08] bg-white/[0.06] px-4 py-3 text-[14.5px] text-[#f5f5f7] outline-none transition placeholder:text-[rgba(235,235,245,0.35)] focus:border-[#0A84FF] focus:ring-4 focus:ring-[#0A84FF]/25";
+  "w-full rounded-xl border border-white/[0.08] bg-white/[0.06] px-3.5 py-2.5 text-[14px] text-[#f5f5f7] outline-none transition placeholder:text-[rgba(235,235,245,0.35)] focus:border-[#0A84FF] focus:ring-2 focus:ring-[#0A84FF]/25";
 
 const labelClass =
   "block text-[12.5px] font-semibold text-[rgba(235,235,245,0.7)]";
 
 const primaryButton =
-  "group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-5 py-3 text-[14.5px] font-semibold text-white shadow-[0_0_24px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+  "group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-5 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
 const secondaryButton =
-  "inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.06] px-5 py-3 text-[14px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:w-auto";
+  "inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.06] px-5 py-2.5 text-[13.5px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:bg-white/[0.1] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:w-auto";
 
 const Spinner = () => (
   <span
@@ -120,24 +120,19 @@ const NewHabit = () => {
     <div className="min-h-svh bg-black text-[#f5f5f7]">
       <Navbar />
 
-      <main className="relative overflow-hidden">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/15 blur-[120px]" />
-          <div className="absolute -right-24 top-40 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
-        </div>
-
-        <div className="relative mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
+      <main>
+        <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-5 sm:py-10">
           <div className="animate-fade-up">
-            <div className="mb-7">
+            <div className="mb-5">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
                 <SparkIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
                 New habit
               </span>
 
-              <h1 className="mt-4 text-[30px] font-bold tracking-tight text-[#f5f5f7] sm:text-[36px]">
+              <h1 className="mt-2 text-[24px] font-bold tracking-tight text-[#f5f5f7] sm:text-[28px]">
                 What do you want to build?
               </h1>
-              <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
+              <p className="mt-1.5 max-w-xl text-[13.5px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                 Pick something specific, give it a weekly target, and make it
                 yours. You can always add more habits later.
               </p>
@@ -146,30 +141,30 @@ const NewHabit = () => {
             <form
               onSubmit={handleSubmit}
               noValidate
-              className="rounded-[26px] border border-white/[0.08] bg-[#1c1c1e] p-6 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)] sm:p-8"
+              className="rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-4 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-5"
             >
               {error && (
                 <div
                   role="alert"
-                  className="mb-6 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
+                  className="mb-5 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
                 >
                   <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
-              <div className="space-y-7">
+              <div className="space-y-5">
                 {/* Preview */}
-                <div className="flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4">
+                <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.04] p-3">
                   <span
                     aria-hidden="true"
-                    className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-[24px]"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[20px]"
                     style={{ backgroundColor: `${color}1f`, color }}
                   >
                     {icon}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-[14.5px] font-bold text-[#f5f5f7]">
+                    <p className="truncate text-[14px] font-bold text-[#f5f5f7]">
                       {name.trim() || "Your new habit"}
                     </p>
                     <p className="mt-0.5 text-[12px] text-[rgba(235,235,245,0.55)]">
@@ -201,10 +196,6 @@ const NewHabit = () => {
                     onChange={(event) => setName(event.target.value)}
                     className={inputBase}
                   />
-                  <p className="mt-1.5 text-[12px] leading-relaxed text-[rgba(235,235,245,0.55)]">
-                    Keep it specific — “Read 20 pages” is easier to keep than
-                    “Read more”.
-                  </p>
                 </div>
 
                 {/* Icon */}
@@ -226,10 +217,10 @@ const NewHabit = () => {
                           aria-label={option.label}
                           aria-pressed={selected}
                           onClick={() => setIcon(option.emoji)}
-                          className={`grid h-11 w-11 place-items-center rounded-[14px] border text-[20px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
+                          className={`grid h-9 w-9 place-items-center rounded-lg border text-[17px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                             selected
-                              ? "border-[#0A84FF] bg-[#0A84FF]/15 ring-2 ring-[#0A84FF]/30"
-                              : "border-white/[0.08] bg-white/[0.05] hover:-translate-y-0.5 hover:border-[#0A84FF]/40"
+                              ? "border-[#0A84FF] bg-[#0A84FF]/15"
+                              : "border-white/[0.08] bg-white/[0.05] hover:border-[#0A84FF]/40"
                           }`}
                         >
                           <span aria-hidden="true">{option.emoji}</span>
@@ -245,7 +236,7 @@ const NewHabit = () => {
                   <div
                     role="group"
                     aria-label="Habit color"
-                    className="mt-2 flex flex-wrap gap-2.5"
+                    className="mt-2 flex flex-wrap gap-2"
                   >
                     {COLOR_OPTIONS.map((option) => {
                       const selected = color === option.value;
@@ -258,7 +249,7 @@ const NewHabit = () => {
                           aria-label={option.name}
                           aria-pressed={selected}
                           onClick={() => setColor(option.value)}
-                          className={`grid h-9 w-9 place-items-center rounded-full shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
+                          className={`grid h-8 w-8 place-items-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                             isLightColor(option.value)
                               ? "text-black"
                               : "text-white"
@@ -291,9 +282,9 @@ const NewHabit = () => {
                       return (
                         <label
                           key={option}
-                          className={`flex cursor-pointer items-center gap-2.5 rounded-[14px] border px-3.5 py-2.5 text-[13px] font-semibold transition focus-within:ring-2 focus-within:ring-[#0A84FF]/60 ${
+                          className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-[12.5px] font-semibold transition focus-within:ring-2 focus-within:ring-[#0A84FF]/60 ${
                             selected
-                              ? "border-[#0A84FF] bg-[#0A84FF]/15 text-white ring-2 ring-[#0A84FF]/30"
+                              ? "border-[#0A84FF] bg-[#0A84FF]/15 text-white"
                               : "border-white/[0.08] bg-white/[0.05] text-[rgba(235,235,245,0.8)] hover:border-white/[0.16] hover:bg-white/[0.08]"
                           }`}
                         >
@@ -305,13 +296,10 @@ const NewHabit = () => {
                             onChange={() => setCategory(option)}
                             className="sr-only"
                           />
-                          <span aria-hidden="true" className="text-[15px]">
+                          <span aria-hidden="true" className="text-[14px]">
                             {CATEGORY_ICONS[option]}
                           </span>
                           <span>{option}</span>
-                          {selected && (
-                            <CheckIcon className="ml-auto h-4 w-4 shrink-0 text-[#409AFF]" />
-                          )}
                         </label>
                       );
                     })}
@@ -321,9 +309,6 @@ const NewHabit = () => {
                 {/* Targets per week */}
                 <fieldset>
                   <legend className={labelClass}>Targets per week</legend>
-                  <p className="mt-1 text-[12px] leading-relaxed text-[rgba(235,235,245,0.55)]">
-                    How many days a week do you want to do this?
-                  </p>
                   <div className="mt-2 grid grid-cols-7 gap-2">
                     {TARGET_OPTIONS.map((value) => {
                       const selected = targetPerWeek === value;
@@ -337,9 +322,9 @@ const NewHabit = () => {
                           } per week`}
                           aria-pressed={selected}
                           onClick={() => setTargetPerWeek(value)}
-                          className={`grid h-11 place-items-center rounded-[14px] border text-[14px] font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
+                          className={`grid h-9 place-items-center rounded-lg border text-[13.5px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60 ${
                             selected
-                              ? "border-transparent bg-[#0A84FF] text-white shadow-[0_0_16px_rgba(10,132,255,0.4)]"
+                              ? "border-transparent bg-[#0A84FF] text-white"
                               : "border-white/[0.08] bg-white/[0.05] text-[rgba(235,235,245,0.8)] hover:border-[#0A84FF]/40 hover:text-[#409AFF]"
                           }`}
                         >
@@ -351,7 +336,7 @@ const NewHabit = () => {
                 </fieldset>
               </div>
 
-              <div className="mt-8 flex flex-col gap-3 border-t border-white/[0.08] pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-6 flex flex-col gap-3 border-t border-white/[0.08] pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <Link to="/" className={secondaryButton}>
                   Cancel
                 </Link>

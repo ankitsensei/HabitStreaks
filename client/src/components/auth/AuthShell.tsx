@@ -53,18 +53,8 @@ interface AuthShellProps {
 const AuthShell = ({ children }: AuthShellProps) => {
   return (
     <div className="relative min-h-svh overflow-hidden bg-black px-3 py-3 sm:px-5 sm:py-5">
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0">
-        <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/20 blur-[130px]" />
-        <div className="absolute -bottom-40 right-0 h-[480px] w-[480px] rounded-full bg-[#BF5AF2]/10 blur-[130px]" />
-      </div>
-
       <main className="relative mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-6xl overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#1c1c1e]/80 shadow-[0_40px_90px_-45px_rgba(0,0,0,0.9)] backdrop-blur-2xl sm:min-h-[calc(100svh-2.5rem)]">
         <aside className="relative hidden w-[46%] max-w-[540px] shrink-0 flex-col overflow-hidden bg-[#141416] p-10 lg:flex xl:p-12">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#0A84FF]/25 blur-3xl" />
-            <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-[#BF5AF2]/15 blur-3xl" />
-          </div>
-
           <div className="relative z-10 flex flex-1 flex-col">
             <BrandMark />
 
@@ -76,9 +66,7 @@ const AuthShell = ({ children }: AuthShellProps) => {
 
               <h2 className="mt-5 text-[34px] font-bold leading-[1.08] tracking-tight text-white xl:text-[40px]">
                 Build habits that{" "}
-                <span className="bg-gradient-to-r from-[#0A84FF] via-[#64D2FF] to-[#BF5AF2] bg-clip-text text-transparent">
-                  actually stick.
-                </span>
+                <span className="text-[#409AFF]">actually stick.</span>
               </h2>
 
               <p className="mt-4 max-w-sm text-[14.5px] leading-relaxed text-[rgba(235,235,245,0.6)]">

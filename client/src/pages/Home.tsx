@@ -97,20 +97,7 @@ const Home = () => {
 
       <main>
         {/* Hero */}
-        <section className="relative overflow-hidden">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            <div className="absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-[#0A84FF]/20 blur-[120px]" />
-            <div className="absolute -right-24 top-32 h-[380px] w-[380px] rounded-full bg-[#BF5AF2]/10 blur-[120px]" />
-            <div
-              className="absolute inset-0 opacity-[0.35] dark:opacity-[0.12]"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 1px 1px, rgba(124,58,237,0.18) 1px, transparent 0)",
-                backgroundSize: "26px 26px",
-              }}
-            />
-          </div>
-
+        <section className="relative">
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-5 py-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
@@ -121,9 +108,7 @@ const Home = () => {
               <h1 className="mt-5 text-[38px] font-bold leading-[1.05] tracking-tight text-[#f5f5f7] sm:text-[52px]">
                 Small habits.
                 <br />
-                <span className="bg-gradient-to-r from-[#0A84FF] via-[#64D2FF] to-[#BF5AF2] bg-clip-text text-transparent">
-                  Unbreakable streaks.
-                </span>
+                <span className="text-[#409AFF]">Unbreakable streaks.</span>
               </h1>
 
               <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-[rgba(235,235,245,0.6)] sm:text-[16px]">
@@ -176,12 +161,7 @@ const Home = () => {
 
             {/* Product visual */}
             <div className="relative mx-auto w-full max-w-md">
-              <div
-                aria-hidden="true"
-                className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-[#0A84FF]/25 via-[#64D2FF]/10 to-[#BF5AF2]/20 blur-2xl"
-              />
-
-              <div className="relative -rotate-1 rounded-[26px] border border-white/[0.08] bg-[#1c1c1e] p-6 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]">
+              <div className="relative rounded-[26px] border border-white/[0.08] bg-[#1c1c1e] p-6 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[rgba(235,235,245,0.4)]">
@@ -379,18 +359,11 @@ const Home = () => {
         {/* Closing CTA */}
         {!isAuthenticated && (
           <section className="px-5 py-16 sm:py-20">
-            <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-14 text-center sm:py-16">
-              <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-                <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#0A84FF]/30 blur-3xl" />
-                <div className="absolute -bottom-28 -left-20 h-80 w-80 rounded-full bg-[#BF5AF2]/20 blur-3xl" />
-              </div>
-
+            <div className="relative mx-auto max-w-6xl rounded-[28px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-14 text-center sm:py-16">
               <div className="relative z-10">
                 <h2 className="mx-auto max-w-2xl text-[28px] font-bold tracking-tight text-white sm:text-[38px]">
                   Your best year starts with{" "}
-                  <span className="bg-gradient-to-r from-[#66AFFF] via-[#64D2FF] to-[#BF5AF2] bg-clip-text text-transparent">
-                    one small habit.
-                  </span>
+                  <span className="text-[#409AFF]">one small habit.</span>
                 </h2>
                 <p className="mx-auto mt-3 max-w-xl text-[14.5px] leading-relaxed text-[rgba(235,235,245,0.6)]">
                   Join HabitStreaks today and give yourself the structure to keep
