@@ -21,6 +21,7 @@ import {
 } from "../components/Icons";
 import { registerUser } from "../lib/api";
 import { getToken } from "../lib/auth";
+import { redirectToGoogleSignIn } from "../lib/google";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -208,32 +209,14 @@ const Register = () => {
     setFormError(null);
     setGoogleNotice(null);
 
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-    if (!clientId) {
+    if (!redirectToGoogleSignIn()) {
       setGoogleNotice(
-        "Google sign-up isn't configured yet. Add VITE_GOOGLE_CLIENT_ID to your .env file to enable it.",
+        "Google sign-up isn't configured yet. Add VITE_AUTH0_DOMAIN and VITE_AUTH0_CLIENT_ID to your .env file to enable it.",
       );
       return;
     }
 
-    const state = `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
-    sessionStorage.setItem("google_oauth_state", state);
     setIsGoogleLoading(true);
-
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: `${window.location.origin}/auth/google/callback`,
-      response_type: "code",
-      scope: "openid email profile",
-      access_type: "offline",
-      prompt: "consent",
-      state,
-    });
-
-    window.location.assign(
-      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
-    );
   };
 
   return (

@@ -125,6 +125,15 @@ export const resendOtp = (email: string) =>
 export const loginUser = (email: string, password: string) =>
   post<LoginResult>("/api/auth/login", { email, password });
 
+export interface GoogleAuthResult {
+  message: string;
+  token: string;
+}
+
+// Exchanges the Auth0 authorization code for an app session token.
+export const googleAuth = (code: string, redirectUri: string) =>
+  post<GoogleAuthResult>("/api/auth/google", { code, redirectUri });
+
 export const HABIT_CATEGORIES = [
   "Health & Fitness",
   "Learning & Education",
