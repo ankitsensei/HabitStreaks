@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertIcon,
@@ -182,11 +188,13 @@ const HabitGraph = ({
   );
 };
 
-// Large screens show a 2-week window of boxes, small screens only the
-// latest week. The extra week collapses with responsive classes, so the
-// shared date header and the box rows stay perfectly aligned.
-const RECENT_DAY_COUNT = 14;
-const SMALL_SCREEN_DAY_COUNT = 7;
+// The week-streak strip fills the width next to the habit names with as
+// many day boxes as fit — it never scrolls. Today is always the last box.
+const MAX_RECENT_DAYS = 30;
+const MIN_RECENT_DAYS = 5;
+// Column width (w-7 / w-8) plus the 2px gap between columns.
+const DAY_STEP_SMALL = 30;
+const DAY_STEP_LARGE = 34;
 
 interface RecentDay {
   key: string;
@@ -234,18 +242,18 @@ const computeWeekStreak = (
   return streak;
 };
 
-// Rolling window of the last RECENT_DAY_COUNT days, oldest first, so the
+// Rolling window of the last MAX_RECENT_DAYS days, oldest first, so the
 // final box is always today.
 const buildWeekRows = (
   habits: HabitWithCompletions[],
   today: Date,
   todayKey: string,
 ): HabitWeekRow[] => {
-  const firstDay = addDays(today, -(RECENT_DAY_COUNT - 1));
+  const firstDay = addDays(today, -(MAX_RECENT_DAYS - 1));
 
   return habits.map((habit) => {
     const completedDays = new Set(habit.completions);
-    const days = Array.from({ length: RECENT_DAY_COUNT }, (_, index) => {
+    const days = Array.from({ length: MAX_RECENT_DAYS }, (_, index) => {
       const date = addDays(firstDay, index);
       const key = formatDateKey(date);
 
@@ -265,6 +273,46 @@ const buildWeekRows = (
   });
 };
 
+// Measures the strip area next to the habit names and reports how many day
+// boxes fit in it (min one handful, max a month). Recomputes on resize, so
+// the shared date header and every habit row always fill the space exactly.
+const useRecentDayCount = () => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [dayCount, setDayCount] = useState(MIN_RECENT_DAYS);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const compute = () => {
+      const width = container.clientWidth;
+      const step =
+        window.innerWidth < 640 ? DAY_STEP_SMALL : DAY_STEP_LARGE;
+      const fitting = Math.floor((width - 12) / step);
+
+      setDayCount(
+        Math.min(MAX_RECENT_DAYS, Math.max(MIN_RECENT_DAYS, fitting)),
+      );
+    };
+
+    compute();
+
+    const observer = new ResizeObserver(compute);
+    observer.observe(container);
+    window.addEventListener("resize", compute);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", compute);
+    };
+  }, []);
+
+  return { containerRef, dayCount };
+};
+
 interface WeekStreaksSectionProps {
   rows: HabitWeekRow[];
   pending: Set<string>;
@@ -275,14 +323,17 @@ const WeekStreaksSection = ({
   rows,
   pending,
   onToggle,
-}: WeekStreaksSectionProps) => (
-  <section className="mt-4 mb-3 w-full max-w-full rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-1.5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+}: WeekStreaksSectionProps) => {
+  const { containerRef, dayCount } = useRecentDayCount();
+
+  return (
+    <section className="mt-4 mb-3 w-full max-w-full rounded-2xl border border-white/[0.08] bg-[#1c1c1e] p-1.5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
     <div className="flex items-center justify-between gap-6 px-1.5 pb-1 pt-0.5">
       <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgba(235,235,245,0.45)]">
         Week streaks
       </span>
       <span className="text-[10.5px] text-[rgba(235,235,245,0.35)]">
-        Last 2 weeks
+        Last {dayCount} days
       </span>
     </div>
 
@@ -322,33 +373,26 @@ const WeekStreaksSection = ({
         ))}
       </div>
 
-      <div className="min-w-0 overflow-x-auto pb-1">
+      <div ref={containerRef} className="min-w-0 flex-1 pb-1">
         <div className="w-max px-1.5">
           {/* One shared heading of dates for every habit row */}
           <div className="flex h-8 items-end gap-[2px]">
-            {(rows[0]?.days ?? []).map((day, dayIndex) => {
-              const hideOnSmall =
-                dayIndex < RECENT_DAY_COUNT - SMALL_SCREEN_DAY_COUNT;
-
-              return (
+            {(rows[0]?.days ?? []).slice(-dayCount).map((day) => (
+              <span
+                key={day.key}
+                className="flex h-8 w-7 shrink-0 items-end justify-center sm:w-8"
+              >
                 <span
-                  key={day.key}
-                  className={`h-8 w-7 shrink-0 items-end justify-center sm:w-8 ${
-                    hideOnSmall ? "hidden sm:flex" : "flex"
+                  className={`whitespace-nowrap text-[9px] font-medium leading-none [writing-mode:vertical-rl] rotate-180 ${
+                    day.isToday
+                      ? "text-[#0A84FF]"
+                      : "text-[rgba(235,235,245,0.4)]"
                   }`}
                 >
-                  <span
-                    className={`whitespace-nowrap text-[9px] font-medium leading-none [writing-mode:vertical-rl] rotate-180 ${
-                      day.isToday
-                        ? "text-[#0A84FF]"
-                        : "text-[rgba(235,235,245,0.4)]"
-                    }`}
-                  >
-                    {formatShortDate(day.date)}
-                  </span>
+                  {formatShortDate(day.date)}
                 </span>
-              );
-            })}
+              </span>
+            ))}
           </div>
 
           {rows.map((row, index) => (
@@ -358,17 +402,13 @@ const WeekStreaksSection = ({
                 index > 0 ? "border-t border-white/[0.06]" : ""
               }`}
             >
-              {row.days.map((day, dayIndex) => {
+              {row.days.slice(-dayCount).map((day) => {
                 const isPending = pending.has(`${row.habit.id}:${day.key}`);
-                const hideOnSmall =
-                  dayIndex < RECENT_DAY_COUNT - SMALL_SCREEN_DAY_COUNT;
 
                 return (
                   <span
                     key={day.key}
-                    className={`w-7 shrink-0 justify-center sm:w-8 ${
-                      hideOnSmall ? "hidden sm:flex" : "flex"
-                    }`}
+                    className="flex w-7 shrink-0 justify-center sm:w-8"
                   >
                     <button
                       type="button"
@@ -405,7 +445,8 @@ const WeekStreaksSection = ({
       </div>
     </div>
   </section>
-);
+  );
+};
 
 interface HabitCardProps {
   habit: HabitWithCompletions;
