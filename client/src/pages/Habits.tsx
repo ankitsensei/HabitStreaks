@@ -4,18 +4,15 @@ import {
   AlertIcon,
   ArrowRightIcon,
   CheckIcon,
-  PencilIcon,
   SparkIcon,
 } from "../components/Icons";
-import EditHabitModal from "../components/EditHabitModal";
 import Navbar from "../components/Navbar";
 import {
   ApiError,
   getHabits,
   toggleHabitCompletion,
-  updateHabit,
 } from "../lib/api";
-import type { HabitWithCompletions, NewHabitInput } from "../lib/api";
+import type { HabitWithCompletions } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
 
 const WEEKS_IN_GRAPH = 53;
@@ -34,6 +31,15 @@ const MONTHS = [
   "Dec",
 ];
 const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
+const WEEKDAY_NAMES = [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+];
 
 const primaryButton =
   "inline-flex items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60";
@@ -111,7 +117,7 @@ const HabitGraph = ({
   );
 
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <div className="flex gap-2">
         <div className="flex shrink-0 flex-col gap-[3px] pt-4 text-[9px] font-medium text-[rgba(235,235,245,0.4)]">
           {DAY_LABELS.map((label, index) => (
@@ -186,13 +192,194 @@ const HabitGraph = ({
   );
 };
 
+const RECENT_DAY_COUNT = 7;
+
+interface RecentDay {
+  key: string;
+  date: Date;
+  isCompleted: boolean;
+  isToday: boolean;
+}
+
+interface HabitWeekRow {
+  habit: HabitWithCompletions;
+  weekStreak: number;
+  days: RecentDay[];
+}
+
+// Consecutive weeks (ending with the current week) where the habit met its
+// weekly target. The in-progress current week only counts once the target is
+// already reached, so an unfinished week never breaks the streak.
+const computeWeekStreak = (
+  habit: HabitWithCompletions,
+  today: Date,
+): number => {
+  const completed = new Set(habit.completions);
+
+  const countWeek = (weekStart: Date) => {
+    let count = 0;
+
+    for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+      if (completed.has(formatDateKey(addDays(weekStart, dayIndex)))) {
+        count += 1;
+      }
+    }
+
+    return count;
+  };
+
+  const currentWeekStart = addDays(today, -today.getDay());
+  let streak = countWeek(currentWeekStart) >= habit.target_per_week ? 1 : 0;
+  let weekStart = addDays(currentWeekStart, -7);
+
+  while (countWeek(weekStart) >= habit.target_per_week) {
+    streak += 1;
+    weekStart = addDays(weekStart, -7);
+  }
+
+  return streak;
+};
+
+// Rolling window of the last RECENT_DAY_COUNT days, oldest first, so the
+// final box is always today.
+const buildWeekRows = (
+  habits: HabitWithCompletions[],
+  today: Date,
+  todayKey: string,
+): HabitWeekRow[] => {
+  const firstDay = addDays(today, -(RECENT_DAY_COUNT - 1));
+
+  return habits.map((habit) => {
+    const completedDays = new Set(habit.completions);
+    const days = Array.from({ length: RECENT_DAY_COUNT }, (_, index) => {
+      const date = addDays(firstDay, index);
+      const key = formatDateKey(date);
+
+      return {
+        key,
+        date,
+        isCompleted: completedDays.has(key),
+        isToday: key === todayKey,
+      };
+    });
+
+    return {
+      habit,
+      weekStreak: computeWeekStreak(habit, today),
+      days,
+    };
+  });
+};
+
+interface WeekStreaksSectionProps {
+  rows: HabitWeekRow[];
+  pending: Set<string>;
+  onToggle: HabitGraphProps["onToggle"];
+}
+
+const WeekStreaksSection = ({
+  rows,
+  pending,
+  onToggle,
+}: WeekStreaksSectionProps) => (
+  <section className="mt-6 mb-6 rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-2 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)]">
+    <div className="flex items-center justify-between px-2 pb-1 pt-1.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgba(235,235,245,0.45)]">
+        Week streaks
+      </span>
+      <span className="text-[10.5px] text-[rgba(235,235,245,0.35)]">
+        Last 7 days
+      </span>
+    </div>
+
+    {rows.map((row, index) => (
+      <div
+        key={row.habit.id}
+        className={`flex items-center gap-2.5 px-2 py-2 ${
+          index > 0 ? "border-t border-white/[0.06]" : ""
+        }`}
+      >
+        <span
+          aria-hidden="true"
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-sm"
+          style={{ backgroundColor: `${row.habit.color}1f` }}
+        >
+          {row.habit.icon}
+        </span>
+
+        <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-[#f5f5f7]">
+          {row.habit.name}
+        </p>
+
+        {row.weekStreak > 0 && (
+          <span
+            title={`${row.weekStreak} week streak`}
+            className="shrink-0 rounded-full bg-[#FF9F0A]/10 px-2 py-0.5 text-[10.5px] font-semibold text-[#FF9F0A]"
+          >
+            {row.weekStreak}w
+          </span>
+        )}
+
+        <div className="flex shrink-0 gap-[4px]">
+          {row.days.map((day) => {
+            const isPending = pending.has(`${row.habit.id}:${day.key}`);
+
+            return (
+              <div
+                key={day.key}
+                className="flex flex-col items-center gap-[3px]"
+              >
+                <span
+                  className={`text-[9px] font-medium leading-none ${
+                    day.isToday
+                      ? "text-[#0A84FF]"
+                      : "text-[rgba(235,235,245,0.4)]"
+                  }`}
+                >
+                  {WEEKDAY_NAMES[day.date.getDay()]}
+                </span>
+
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() =>
+                    onToggle(row.habit, day.key, day.isCompleted)
+                  }
+                  title={`${formatDisplayDate(day.date)} · ${
+                    day.isCompleted ? "Done" : "Not done"
+                  }`}
+                  aria-label={`${formatDisplayDate(day.date)}: ${
+                    day.isCompleted ? "done" : "not done"
+                  }${day.isToday ? " (today)" : ""}`}
+                  aria-pressed={day.isCompleted}
+                  className={`h-6 w-6 rounded-[2px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1c1c1e] ${
+                    day.isCompleted
+                      ? "hover:brightness-110"
+                      : "bg-white/[0.08] hover:bg-white/[0.18]"
+                  } ${day.isToday ? "ring-1 ring-white/40" : ""} ${
+                    isPending ? "animate-pulse" : ""
+                  }`}
+                  style={
+                    day.isCompleted
+                      ? { backgroundColor: row.habit.color }
+                      : undefined
+                  }
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    ))}
+  </section>
+);
+
 interface HabitCardProps {
   habit: HabitWithCompletions;
   weeks: Date[][];
   todayKey: string;
   pending: Set<string>;
   onToggle: HabitGraphProps["onToggle"];
-  onEdit: (habit: HabitWithCompletions) => void;
 }
 
 const HabitCard = ({
@@ -201,41 +388,30 @@ const HabitCard = ({
   todayKey,
   pending,
   onToggle,
-  onEdit,
 }: HabitCardProps) => (
-  <article className="rounded-[22px] border border-white/[0.08] bg-[#1c1c1e] p-5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-6">
-    <div className="flex items-center gap-3.5">
+  <article className="rounded-[18px] border border-white/[0.08] bg-[#1c1c1e] p-3.5 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.8)] sm:p-4">
+    <div className="flex items-center gap-3">
       <span
         aria-hidden="true"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-[22px]"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-lg"
         style={{ backgroundColor: `${habit.color}1f` }}
       >
         {habit.icon}
       </span>
 
       <div className="min-w-0 flex-1">
-        <h2 className="truncate text-[15px] font-bold text-[#f5f5f7]">
+        <h2 className="truncate text-[14px] font-bold text-[#f5f5f7]">
           {habit.name}
         </h2>
-        <p className="mt-0.5 text-[11.5px] text-[rgba(235,235,245,0.55)]">
+        <p className="mt-0.5 text-[11px] text-[rgba(235,235,245,0.55)]">
           {habit.category} · {habit.target_per_week}× per week
         </p>
       </div>
 
-      <span className="shrink-0 rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] font-semibold text-[rgba(235,235,245,0.65)]">
+      <span className="shrink-0 rounded-full bg-white/[0.08] px-2 py-0.5 text-[10.5px] font-semibold text-[rgba(235,235,245,0.65)]">
         {habit.completions.length}{" "}
         {habit.completions.length === 1 ? "day" : "days"}
       </span>
-
-      <button
-        type="button"
-        onClick={() => onEdit(habit)}
-        aria-label={`Edit ${habit.name}`}
-        title="Edit habit"
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/[0.08] bg-white/[0.05] text-[rgba(235,235,245,0.6)] transition hover:border-[#0A84FF]/40 hover:bg-[#0A84FF]/15 hover:text-[#409AFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
-      >
-        <PencilIcon className="h-3.5 w-3.5" />
-      </button>
     </div>
 
     <HabitGraph
@@ -269,9 +445,12 @@ const Habits = () => {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const pendingRef = useRef<Set<string>>(new Set());
-  const [editingHabit, setEditingHabit] = useState<HabitWithCompletions | null>(
-    null,
+
+  const weekRows = useMemo(
+    () => buildWeekRows(habits, graph.today, graph.todayKey),
+    [habits, graph.today, graph.todayKey],
   );
+
   const [notice, setNotice] = useState<{
     kind: "added" | "updated";
     name: string;
@@ -418,43 +597,6 @@ const Habits = () => {
     }
   };
 
-  const handleSaveHabit = async (input: NewHabitInput) => {
-    if (!editingHabit) {
-      return;
-    }
-
-    const token = getToken();
-
-    if (!token) {
-      navigate("/login", { replace: true });
-      return;
-    }
-
-    try {
-      const result = await updateHabit(token, editingHabit.id, input);
-
-      setHabits((current) =>
-        current.map((item) =>
-          item.id === result.habit.id
-            ? { ...result.habit, completions: item.completions }
-            : item,
-        ),
-      );
-      setEditingHabit(null);
-      setNotice({ kind: "updated", name: result.habit.name });
-    } catch (err) {
-      if (
-        err instanceof ApiError &&
-        (err.status === 401 || err.status === 403)
-      ) {
-        clearToken();
-        navigate("/login", { replace: true });
-      }
-
-      throw err;
-    }
-  };
-
   if (!isAuthenticated) {
     return null;
   }
@@ -555,30 +697,29 @@ const Habits = () => {
               </Link>
             </div>
           ) : (
-            <div className="mt-8 space-y-5">
-              {habits.map((habit) => (
-                <HabitCard
-                  key={habit.id}
-                  habit={habit}
-                  weeks={graph.weeks}
-                  todayKey={graph.todayKey}
-                  pending={pending}
-                  onToggle={handleToggle}
-                  onEdit={setEditingHabit}
-                />
-              ))}
-            </div>
+            <>
+              <WeekStreaksSection
+                rows={weekRows}
+                pending={pending}
+                onToggle={handleToggle}
+              />
+
+              <div className="mt-3 space-y-3">
+                {habits.map((habit) => (
+                  <HabitCard
+                    key={habit.id}
+                    habit={habit}
+                    weeks={graph.weeks}
+                    todayKey={graph.todayKey}
+                    pending={pending}
+                    onToggle={handleToggle}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </main>
-
-      {editingHabit && (
-        <EditHabitModal
-          habit={editingHabit}
-          onClose={() => setEditingHabit(null)}
-          onSave={handleSaveHabit}
-        />
-      )}
     </div>
   );
 };
