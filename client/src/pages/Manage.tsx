@@ -4,6 +4,8 @@ import {
   AlertIcon,
   ArrowRightIcon,
   CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   GripIcon,
   PencilIcon,
   SlidersIcon,
@@ -50,7 +52,10 @@ const Manage = () => {
   const [deletingHabit, setDeletingHabit] =
     useState<HabitWithCompletions | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const [dropHint, setDropHint] = useState<{
+    id: number;
+    place: "before" | "after";
+  } | null>(null);
   const dragStartHabitsRef = useRef<HabitWithCompletions[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -186,7 +191,7 @@ const Manage = () => {
   const resetDragState = () => {
     dragStartHabitsRef.current = null;
     setDraggingId(null);
-    setDragOverId(null);
+    setDropHint(null);
   };
 
   const saveOrder = async (
@@ -226,21 +231,30 @@ const Manage = () => {
     }
   };
 
+  // The whole row is draggable; dragging from the action buttons is cancelled
+  // so clicks never turn into accidental drags.
   const handleDragStart = (
     event: DragEvent<HTMLElement>,
     habit: HabitWithCompletions,
   ) => {
+    if ((event.target as HTMLElement).closest("button")) {
+      event.preventDefault();
+      return;
+    }
+
     dragStartHabitsRef.current = habits;
     setDraggingId(habit.id);
-    setDragOverId(habit.id);
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", String(habit.id));
+    event.dataTransfer.setDragImage(event.currentTarget, 24, 24);
+  };
 
-    const row = event.currentTarget.closest("article");
+  // The insertion point is whichever half of the hovered row the pointer is
+  // in, so the blue line always shows exactly where the habit will land.
+  const getDropPlace = (event: DragEvent<HTMLElement>): "before" | "after" => {
+    const rect = event.currentTarget.getBoundingClientRect();
 
-    if (row) {
-      event.dataTransfer.setDragImage(row, 24, 24);
-    }
+    return event.clientY < rect.top + rect.height / 2 ? "before" : "after";
   };
 
   const handleDragOver = (
@@ -249,14 +263,22 @@ const Manage = () => {
   ) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
-    setDragOverId((current) => (current === habitId ? current : habitId));
+
+    const place = getDropPlace(event);
+
+    setDropHint((current) =>
+      current?.id === habitId && current.place === place
+        ? current
+        : { id: habitId, place },
+    );
   };
 
   const handleDrop = (event: DragEvent<HTMLElement>, targetId: number) => {
     event.preventDefault();
 
-    const rawId = event.dataTransfer.getData("text/plain");
-    const draggedId = draggingId ?? Number(rawId);
+    const place = getDropPlace(event);
+    const draggedId =
+      draggingId ?? Number(event.dataTransfer.getData("text/plain"));
     const previous = dragStartHabitsRef.current ?? habits;
 
     resetDragState();
@@ -270,15 +292,40 @@ const Manage = () => {
     }
 
     const fromIndex = habits.findIndex((habit) => habit.id === draggedId);
-    const toIndex = habits.findIndex((habit) => habit.id === targetId);
+    const targetIndex = habits.findIndex((habit) => habit.id === targetId);
 
-    if (fromIndex === -1 || toIndex === -1) {
+    if (fromIndex === -1 || targetIndex === -1) {
       return;
     }
 
+    // Remove first, then find the target's shifted index, so dropping "after"
+    // lands the habit directly below the row it was dropped on.
     const next = [...habits];
     const [moved] = next.splice(fromIndex, 1);
+    let toIndex = next.findIndex((habit) => habit.id === targetId);
+
+    if (place === "after") {
+      toIndex += 1;
+    }
+
     next.splice(toIndex, 0, moved);
+
+    setHabits(next);
+    void saveOrder(next, previous);
+  };
+
+  // Keyboard- and touch-friendly fallback: swap with the adjacent habit.
+  const moveHabit = (habitId: number, direction: -1 | 1) => {
+    const index = habits.findIndex((habit) => habit.id === habitId);
+    const nextIndex = index + direction;
+
+    if (index === -1 || nextIndex < 0 || nextIndex >= habits.length) {
+      return;
+    }
+
+    const previous = habits;
+    const next = [...habits];
+    [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
 
     setHabits(next);
     void saveOrder(next, previous);
@@ -293,24 +340,36 @@ const Manage = () => {
       <Navbar />
 
       <main>
-        <div className="relative mx-auto w-full max-w-4xl px-5 py-10 sm:py-14">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
-            <SlidersIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
-            Manage
-          </span>
+        <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-5 sm:py-10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11.5px] font-medium text-[#66AFFF] backdrop-blur">
+                <SlidersIcon className="h-3.5 w-3.5 text-[#FF9F0A]" />
+                Manage
+              </span>
 
-          <h1 className="mt-4 text-[30px] font-bold tracking-tight text-[#f5f5f7] sm:text-[36px]">
-            Manage your habits
-          </h1>
-          <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[rgba(235,235,245,0.6)]">
-            Drag habits into the order you want — it carries over to your
-            Calendar. You can also edit or delete any habit.
-          </p>
+              <h1 className="mt-2 text-[24px] font-bold tracking-tight text-[#f5f5f7] sm:text-[28px]">
+                Manage your habits
+              </h1>
+              <p className="mt-1.5 max-w-xl text-[13.5px] leading-relaxed text-[rgba(235,235,245,0.6)]">
+                Drag to reorder — it carries over to your Calendar. You can
+                also edit or delete any habit.
+              </p>
+            </div>
+
+            <Link
+              to="/newhabit"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
+            >
+              <SparkIcon className="h-3.5 w-3.5" />
+              New habit
+            </Link>
+          </div>
 
           {notice && (
             <div
               role="status"
-              className="mt-6 flex items-start gap-2.5 rounded-xl bg-[#30D158]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#30D158] ring-1 ring-[#30D158]/25"
+              className="mt-4 flex items-start gap-2.5 rounded-xl bg-[#30D158]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#30D158] ring-1 ring-[#30D158]/25"
             >
               <CheckIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span className="flex-1">{notice}</span>
@@ -328,7 +387,7 @@ const Manage = () => {
           {error && (
             <div
               role="alert"
-              className="mt-6 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
+              className="mt-4 flex items-start gap-2.5 rounded-xl bg-[#FF453A]/10 px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#FF6961] ring-1 ring-[#FF453A]/25"
             >
               <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
@@ -336,104 +395,140 @@ const Manage = () => {
           )}
 
           {isLoading ? (
-            <div className="mt-8 flex items-center justify-center gap-3 rounded-[22px] border border-white/[0.08] bg-[#1c1c1e] px-6 py-16 text-[13px] font-medium text-[rgba(235,235,245,0.6)]">
+            <div className="mt-4 flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-[#1c1c1e] px-6 py-10 text-[13px] font-medium text-[rgba(235,235,245,0.6)]">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-[#0A84FF]" />
               Loading your habits…
             </div>
           ) : habits.length === 0 ? (
-            <div className="mt-8 rounded-[26px] border border-dashed border-white/15 bg-white/[0.02] px-6 py-14 text-center">
-              <span className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-[#0A84FF]/10 text-[#409AFF] ring-1 ring-[#0A84FF]/20">
-                <SlidersIcon className="h-7 w-7" />
+            <div className="mt-4 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center">
+              <span className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-[#0A84FF]/10 text-[#409AFF] ring-1 ring-[#0A84FF]/20">
+                <SlidersIcon className="h-5 w-5" />
               </span>
-              <h2 className="mt-4 text-[20px] font-bold text-[#f5f5f7]">
+              <h2 className="mt-3 text-[16px] font-bold text-[#f5f5f7]">
                 No habits to manage yet
               </h2>
-              <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[rgba(235,235,245,0.55)]">
+              <p className="mx-auto mt-1.5 max-w-md text-[12.5px] leading-relaxed text-[rgba(235,235,245,0.55)]">
                 Create your first habit, then come back here to edit it.
               </p>
               <Link
                 to="/newhabit"
-                className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_0_20px_rgba(10,132,255,0.35)] transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A84FF] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#3395FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/60"
               >
-                <SparkIcon className="h-4 w-4" />
+                <SparkIcon className="h-3.5 w-3.5" />
                 New habit
                 <ArrowRightIcon className="h-3.5 w-3.5" />
               </Link>
             </div>
           ) : (
-            <div className="mt-8 space-y-3">
-              {habits.map((habit) => (
-                <article
-                  key={habit.id}
-                  onDragOver={(event) => handleDragOver(event, habit.id)}
-                  onDrop={(event) => handleDrop(event, habit.id)}
-                  className={`flex items-center gap-3 rounded-[20px] border bg-[#1c1c1e] p-4 shadow-[0_16px_32px_-24px_rgba(0,0,0,0.8)] transition sm:gap-4 sm:p-5 ${
-                    dragOverId === habit.id && draggingId !== habit.id
-                      ? "border-[#0A84FF]/60 ring-2 ring-[#0A84FF]/25"
-                      : "border-white/[0.08] hover:border-white/[0.16]"
-                  } ${draggingId === habit.id ? "opacity-50" : ""}`}
-                >
-                  <span
+            <div className="mt-4 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1c1c1e]">
+              {habits.map((habit) => {
+                const isFirst = habit.id === habits[0].id;
+                const isLast = habit.id === habits[habits.length - 1].id;
+
+                return (
+                  <article
+                    key={habit.id}
                     draggable
                     onDragStart={(event) => handleDragStart(event, habit)}
                     onDragEnd={resetDragState}
-                    title="Drag to reorder"
-                    aria-label={`Reorder ${habit.name}`}
-                    className="grid h-8 w-6 shrink-0 cursor-grab place-items-center rounded-md text-[rgba(235,235,245,0.35)] transition hover:bg-white/[0.08] hover:text-[rgba(235,235,245,0.7)] active:cursor-grabbing"
+                    onDragOver={(event) => handleDragOver(event, habit.id)}
+                    onDrop={(event) => handleDrop(event, habit.id)}
+                    className={`group relative flex items-center gap-2.5 px-3 py-2.5 transition sm:px-4 ${
+                      isFirst ? "" : "border-t border-white/[0.06]"
+                    } ${
+                      draggingId === habit.id ? "opacity-40" : "hover:bg-white/[0.03]"
+                    }`}
                   >
-                    <GripIcon className="h-4 w-4" />
-                  </span>
+                    {dropHint?.id === habit.id && dropHint.place === "before" && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -top-px left-2 right-2 h-0.5 rounded-full bg-[#0A84FF]"
+                      />
+                    )}
+                    {dropHint?.id === habit.id && dropHint.place === "after" && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -bottom-px left-2 right-2 h-0.5 rounded-full bg-[#0A84FF]"
+                      />
+                    )}
 
-                  <span
-                    aria-hidden="true"
-                    className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-[22px]"
-                    style={{ backgroundColor: `${habit.color}1f` }}
-                  >
-                    {habit.icon}
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-[15px] font-bold text-[#f5f5f7]">
-                      {habit.name}
-                    </h2>
-                    <p className="mt-0.5 truncate text-[11.5px] text-[rgba(235,235,245,0.55)]">
-                      {habit.category} · {habit.target_per_week}× per week
-                    </p>
-                  </div>
-
-                  <span
-                    title="Check-ins in the last 12 months"
-                    className="hidden shrink-0 rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] font-semibold text-[rgba(235,235,245,0.65)] sm:inline"
-                  >
-                    {habit.completions.length}{" "}
-                    {habit.completions.length === 1 ? "day" : "days"}
-                  </span>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingHabit(habit)}
-                      aria-label={`Edit ${habit.name}`}
-                      title="Edit habit"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:border-[#0A84FF]/40 hover:bg-[#0A84FF]/15 hover:text-[#409AFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
+                    <span
+                      title="Drag to reorder"
+                      className="grid h-8 w-6 shrink-0 cursor-grab place-items-center rounded-md text-[rgba(235,235,245,0.3)] transition group-hover:text-[rgba(235,235,245,0.55)] active:cursor-grabbing"
                     >
-                      <PencilIcon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Edit</span>
-                    </button>
+                      <GripIcon className="h-4 w-4" />
+                    </span>
 
-                    <button
-                      type="button"
-                      onClick={() => setDeletingHabit(habit)}
-                      aria-label={`Delete ${habit.name}`}
-                      title="Delete habit"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1.5 text-[12.5px] font-semibold text-[rgba(235,235,245,0.8)] transition hover:border-[#FF453A]/40 hover:bg-[#FF453A]/10 hover:text-[#FF6961] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF453A]/50"
+                    <span
+                      aria-hidden="true"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[17px]"
+                      style={{ backgroundColor: `${habit.color}1f` }}
                     >
-                      <TrashIcon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Delete</span>
-                    </button>
-                  </div>
-                </article>
-              ))}
+                      {habit.icon}
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <h2 className="truncate text-[13.5px] font-semibold text-[#f5f5f7]">
+                        {habit.name}
+                      </h2>
+                      <p className="mt-0 truncate text-[11px] text-[rgba(235,235,245,0.55)]">
+                        {habit.category} · {habit.target_per_week}× per week
+                      </p>
+                    </div>
+
+                    <span
+                      title="Check-ins in the last 12 months"
+                      className="hidden shrink-0 rounded-full bg-white/[0.08] px-2 py-0.5 text-[10.5px] font-semibold text-[rgba(235,235,245,0.65)] sm:inline"
+                    >
+                      {habit.completions.length}{" "}
+                      {habit.completions.length === 1 ? "day" : "days"}
+                    </span>
+
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveHabit(habit.id, -1)}
+                        disabled={isFirst}
+                        aria-label={`Move ${habit.name} up`}
+                        title="Move up"
+                        className="grid h-7 w-7 place-items-center rounded-md text-[rgba(235,235,245,0.55)] transition hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50 disabled:pointer-events-none disabled:opacity-30 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                      >
+                        <ChevronUpIcon className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveHabit(habit.id, 1)}
+                        disabled={isLast}
+                        aria-label={`Move ${habit.name} down`}
+                        title="Move down"
+                        className="grid h-7 w-7 place-items-center rounded-md text-[rgba(235,235,245,0.55)] transition hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50 disabled:pointer-events-none disabled:opacity-30 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                      >
+                        <ChevronDownIcon className="h-3.5 w-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingHabit(habit)}
+                        aria-label={`Edit ${habit.name}`}
+                        title="Edit habit"
+                        className="grid h-8 w-8 place-items-center rounded-md text-[rgba(235,235,245,0.6)] transition hover:bg-[#0A84FF]/15 hover:text-[#409AFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A84FF]/50"
+                      >
+                        <PencilIcon className="h-3.5 w-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeletingHabit(habit)}
+                        aria-label={`Delete ${habit.name}`}
+                        title="Delete habit"
+                        className="grid h-8 w-8 place-items-center rounded-md text-[rgba(235,235,245,0.6)] transition hover:bg-[#FF453A]/15 hover:text-[#FF6961] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF453A]/50"
+                      >
+                        <TrashIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
