@@ -220,7 +220,7 @@ router.post("/login", async (req: Request, res: Response) => {
 
     const payload = { userId: user.id, email: user.email };
     const secret = process.env.JWT_SECRET as string;
-    const expiresIn = (process.env.JWT_EXPIRES_IN || "1h") as any;
+    const expiresIn = (process.env.JWT_EXPIRES_IN || "30d") as any;
 
     const token = jwt.sign(payload, secret, { expiresIn });
 
@@ -346,7 +346,7 @@ router.post("/google", async (req: Request, res: Response) => {
     // 4. Issue the app's usual JWT.
     const payload = { userId: user.id, email: user.email };
     const secret = process.env.JWT_SECRET as string;
-    const expiresIn = (process.env.JWT_EXPIRES_IN || "1h") as any;
+    const expiresIn = (process.env.JWT_EXPIRES_IN || "30d") as any;
     const token = jwt.sign(payload, secret, { expiresIn });
 
     return res.json({

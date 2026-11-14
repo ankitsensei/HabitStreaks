@@ -1,48 +1,32 @@
 @import "tailwindcss";
 
 /*
- * Dark mode is the only theme.
- * The `dark` class is applied on <html> (index.html) so `dark:` utilities
- * always resolve, regardless of the OS appearance setting.
+ * Dovetail-inspired dark theme:
+ * near-black canvas with a faint blueprint grid, white type,
+ * surfaces stacked by luminance, and a single soft-indigo accent.
  */
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
-  /* Apple system font stack — SF Pro on Apple devices. */
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-    "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
 
-  /* Apple system blue ramp — iOS dark-mode accent (#0A84FF). */
-  --color-brand-50: rgb(10 132 255 / 0.1);
-  --color-brand-100: rgb(10 132 255 / 0.16);
-  --color-brand-200: rgb(10 132 255 / 0.3);
-  --color-brand-300: #66afff;
-  --color-brand-400: #409aff;
-  --color-brand-500: #0a84ff;
-  --color-brand-600: #0a84ff;
-  --color-brand-700: #3395ff;
-  --color-brand-800: #66b2ff;
-  --color-brand-900: #99ccff;
-  --color-brand-950: #cce6ff;
+  /* Surfaces — elevation through luminance, never shadow */
+  --color-carbon: #0a0a0a;
+  --color-graphite: #141414;
+  --color-iron: #1e1e1e;
+  --color-slate-edge: #313131;
+  --color-smoke: #454545;
 
-  /* iOS dark-mode surfaces. */
-  --color-surface: #1c1c1e;
-  --color-surface-2: #2c2c2e;
-  --color-surface-3: #3a3a3c;
+  /* Text */
+  --color-bone: #ffffff;
+  --color-ash: #a7a7a7;
+  --color-mist: #7c7c7c;
 
-  /* Apple label hierarchy. */
-  --color-label: #f5f5f7;
-  --color-label-2: rgb(235 235 245 / 0.6);
-  --color-label-3: rgb(235 235 245 / 0.35);
-
-  /* Apple system colors (dark mode). */
-  --color-ios-blue: #0a84ff;
-  --color-ios-green: #30d158;
-  --color-ios-red: #ff453a;
-  --color-ios-orange: #ff9f0a;
-  --color-ios-purple: #bf5af2;
-  --color-ios-cyan: #64d2ff;
+  /* The single chromatic note */
+  --color-soft-indigo: #6798ff;
 }
 
 html {
@@ -53,8 +37,8 @@ html {
 body {
   margin: 0;
   min-height: 100svh;
-  background-color: #000;
-  color: #f5f5f7;
+  background-color: #0a0a0a;
+  color: #ffffff;
   font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -67,7 +51,7 @@ body {
 }
 
 ::selection {
-  background-color: rgb(10 132 255 / 0.35);
+  background-color: rgb(103 152 255 / 0.3);
 }
 
 button,
@@ -75,19 +59,27 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Slim, unobtrusive macOS-style scrollbars. */
+/* Blueprint grid — 1px lines at 48px spacing, recessive. */
+.blueprint-grid {
+  background-image:
+    linear-gradient(to right, #1e1e1e 1px, transparent 1px),
+    linear-gradient(to bottom, #1e1e1e 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Slim, unobtrusive scrollbars. */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(120 120 128 / 0.4);
+  background: rgb(255 255 255 / 0.15);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(120 120 128 / 0.6);
+  background: rgb(255 255 255 / 0.28);
 }
 
 ::-webkit-scrollbar-track {
@@ -97,7 +89,7 @@ a {
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -106,7 +98,7 @@ a {
 }
 
 .animate-fade-up {
-  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
