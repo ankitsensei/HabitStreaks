@@ -89,28 +89,33 @@ const Manage = () => {
  return;
  }
 
- let cancelled = false;
+ const requestState = { cancelled: false };
  const { from, to } = getLastYearRange();
  const key = habitsCacheKey(from, to);
  const cached = peekHabits(key);
 
+ const applyHabits = (data: HabitWithCompletions[]) => {
+ if (requestState.cancelled) {
+ return;
+ }
+
+ setHabits(data);
+ setError(null);
+ setIsLoading(false);
+ };
+
  if (cached) {
  // Cache hit: render immediately, skip setIsLoading(true) entirely, and
  // only go back to the network once the entry has aged past the TTL.
- setHabits(cached);
- setError(null);
- setIsLoading(false);
+ applyHabits(cached);
 
  if (!isHabitsCacheFresh(key)) {
  const mutationsAtStart = mutationsRef.current;
 
  void fetchHabits(token, from, to)
  .then((fresh) => {
- if (
- !cancelled &&
- mutationsRef.current === mutationsAtStart
- ) {
- setHabits(fresh);
+ if (mutationsRef.current === mutationsAtStart) {
+ applyHabits(fresh);
  }
  })
  .catch(() => {
@@ -119,7 +124,7 @@ const Manage = () => {
  }
 
  return () => {
- cancelled = true;
+ requestState.cancelled = true;
  };
  }
 
@@ -130,11 +135,9 @@ const Manage = () => {
  try {
  const result = await fetchHabits(token, from, to);
 
- if (!cancelled) {
- setHabits(result);
- }
+ applyHabits(result);
  } catch (err) {
- if (cancelled) {
+ if (requestState.cancelled) {
  return;
  }
 
@@ -153,7 +156,7 @@ const Manage = () => {
  : "Couldn't load your habits. Please try again.",
  );
  } finally {
- if (!cancelled) {
+ if (!requestState.cancelled) {
  setIsLoading(false);
  }
  }
@@ -162,7 +165,7 @@ const Manage = () => {
  void loadHabits();
 
  return () => {
- cancelled = true;
+ requestState.cancelled = true;
  };
  }, [isAuthenticated, navigate]);
 

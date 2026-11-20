@@ -700,33 +700,36 @@ const Statistics = () => {
  return;
  }
 
- let cancelled = false;
+ const requestState = { cancelled: false };
  const from = formatDateKey(viewRange.from);
  const to = formatDateKey(viewRange.to);
  const cached = peekHabits(viewKey);
 
+ const applyHabits = (data: HabitWithCompletions[]) => {
+ if (requestState.cancelled) {
+ return;
+ }
+
+ setHabits(data);
+ setDataKey(viewKey);
+ setError(null);
+ };
+
  if (cached) {
  // Cache hit: render immediately, skip the loading skeleton, and only go
  // back to the network once the entry has aged past the TTL.
- setHabits(cached);
- setDataKey(viewKey);
- setError(null);
+ applyHabits(cached);
 
  if (!isHabitsCacheFresh(viewKey)) {
  void fetchHabits(token, from, to)
- .then((fresh) => {
- if (!cancelled) {
- setHabits(fresh);
- setDataKey(viewKey);
- }
- })
+ .then((fresh) => applyHabits(fresh))
  .catch(() => {
  // Keep the cached copy on screen; the next visit retries.
  });
  }
 
  return () => {
- cancelled = true;
+ requestState.cancelled = true;
  };
  }
 
@@ -736,12 +739,9 @@ const Statistics = () => {
  try {
  const result = await fetchHabits(token, from, to);
 
- if (!cancelled) {
- setHabits(result);
- setDataKey(viewKey);
- }
+ applyHabits(result);
  } catch (err) {
- if (cancelled) {
+ if (requestState.cancelled) {
  return;
  }
 
@@ -765,7 +765,7 @@ const Statistics = () => {
  void loadHabits();
 
  return () => {
- cancelled = true;
+ requestState.cancelled = true;
  };
  }, [
  isAuthenticated,
