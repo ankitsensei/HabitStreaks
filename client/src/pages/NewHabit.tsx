@@ -8,6 +8,7 @@ import {
 } from "../components/Icons";
 import Navbar from "../components/Navbar";
 import { ApiError, addHabit, HABIT_CATEGORIES } from "../lib/api";
+import { invalidateHabits } from "../lib/habitsCache";
 import type { HabitCategory } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
 import {
@@ -90,6 +91,9 @@ const NewHabit = () => {
  category,
  targetPerWeek,
  });
+
+ // A new habit changes every cached date range.
+ invalidateHabits();
 
  navigate("/habits", {
  replace: true,

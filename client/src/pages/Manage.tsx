@@ -18,12 +18,18 @@ import Navbar from "../components/Navbar";
 import {
  ApiError,
  deleteHabit,
- getHabits,
  reorderHabits,
  updateHabit,
 } from "../lib/api";
 import type { HabitWithCompletions, NewHabitInput } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
+import {
+ fetchHabits,
+ habitsCacheKey,
+ invalidateHabits,
+ isHabitsCacheFresh,
+ peekHabits,
+} from "../lib/habitsCache";
 
 const formatDateKey = (date: Date) => {
  const year = date.getFullYear();
@@ -44,8 +50,16 @@ const Manage = () => {
  const navigate = useNavigate();
  const { isAuthenticated } = useAuth();
 
- const [habits, setHabits] = useState<HabitWithCompletions[]>([]);
- const [isLoading, setIsLoading] = useState(true);
+ const initialRange = getLastYearRange();
+ const initialKey = habitsCacheKey(initialRange.from, initialRange.to);
+ const cachedHabits = peekHabits(initialKey);
+
+ // Seed from the shared cache so revisiting Manage renders the list
+ // immediately instead of flashing the loading state.
+ const [habits, setHabits] = useState<HabitWithCompletions[]>(
+ () => cachedHabits ?? [],
+ );
+ const [isLoading, setIsLoading] = useState(() => cachedHabits === null);
  const [error, setError] = useState<string | null>(null);
  const [editingHabit, setEditingHabit] =
  useState<HabitWithCompletions | null>(null);
@@ -57,6 +71,9 @@ const Manage = () => {
  place: "before" | "after";
  } | null>(null);
  const dragStartHabitsRef = useRef<HabitWithCompletions[] | null>(null);
+ // Bumped on every mutation so a background revalidation started before it
+ // can't overwrite a change the user just made.
+ const mutationsRef = useRef(0);
  const [notice, setNotice] = useState<string | null>(null);
 
  useEffect(() => {
@@ -73,17 +90,48 @@ const Manage = () => {
  }
 
  let cancelled = false;
+ const { from, to } = getLastYearRange();
+ const key = habitsCacheKey(from, to);
+ const cached = peekHabits(key);
+
+ if (cached) {
+ // Cache hit: render immediately, skip setIsLoading(true) entirely, and
+ // only go back to the network once the entry has aged past the TTL.
+ setHabits(cached);
+ setError(null);
+ setIsLoading(false);
+
+ if (!isHabitsCacheFresh(key)) {
+ const mutationsAtStart = mutationsRef.current;
+
+ void fetchHabits(token, from, to)
+ .then((fresh) => {
+ if (
+ !cancelled &&
+ mutationsRef.current === mutationsAtStart
+ ) {
+ setHabits(fresh);
+ }
+ })
+ .catch(() => {
+ // Keep the cached copy on screen; the next visit retries.
+ });
+ }
+
+ return () => {
+ cancelled = true;
+ };
+ }
 
  const loadHabits = async () => {
  setIsLoading(true);
  setError(null);
 
  try {
- const { from, to } = getLastYearRange();
- const result = await getHabits(token, from, to);
+ const result = await fetchHabits(token, from, to);
 
  if (!cancelled) {
- setHabits(result.habits);
+ setHabits(result);
  }
  } catch (err) {
  if (cancelled) {
@@ -133,6 +181,9 @@ const Manage = () => {
  try {
  const result = await updateHabit(token, editingHabit.id, input);
 
+ mutationsRef.current += 1;
+ invalidateHabits();
+
  setHabits((current) =>
  current.map((item) =>
  item.id === result.habit.id
@@ -169,6 +220,9 @@ const Manage = () => {
 
  try {
  await deleteHabit(token, deletingHabit.id);
+
+ mutationsRef.current += 1;
+ invalidateHabits();
 
  setHabits((current) =>
  current.filter((item) => item.id !== deletingHabit.id),
@@ -210,6 +264,8 @@ const Manage = () => {
  token,
  next.map((habit) => habit.id),
  );
+ mutationsRef.current += 1;
+ invalidateHabits();
  setNotice("Habit order updated.");
  } catch (err) {
  setHabits(previous);

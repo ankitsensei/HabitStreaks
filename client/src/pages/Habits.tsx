@@ -13,9 +13,16 @@ import {
  SparkIcon,
 } from "../components/Icons";
 import Navbar from "../components/Navbar";
-import { ApiError, getHabits, toggleHabitCompletion } from "../lib/api";
+import { ApiError, toggleHabitCompletion } from "../lib/api";
 import type { HabitWithCompletions } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
+import {
+ fetchHabits,
+ habitsCacheKey,
+ invalidateHabits,
+ isHabitsCacheFresh,
+ peekHabits,
+} from "../lib/habitsCache";
 
 const WEEKS_IN_GRAPH = 53;
 const MONTHS = [
@@ -510,11 +517,25 @@ const Habits = () => {
  };
  }, []);
 
- const [habits, setHabits] = useState<HabitWithCompletions[]>([]);
- const [isLoading, setIsLoading] = useState(true);
+ const cacheKey = habitsCacheKey(
+ formatDateKey(graph.start),
+ formatDateKey(graph.today),
+ );
+
+ // Seed state from the shared cache so a returning visit paints the year
+ // graph on the first frame instead of flashing the loading state.
+ const [habits, setHabits] = useState<HabitWithCompletions[]>(
+ () => peekHabits(cacheKey) ?? [],
+ );
+ const [isLoading, setIsLoading] = useState(
+ () => peekHabits(cacheKey) === null,
+ );
  const [error, setError] = useState<string | null>(null);
  const [pending, setPending] = useState<Set<string>>(new Set());
  const pendingRef = useRef<Set<string>>(new Set());
+ // Bumped on every mutation so a background revalidation started before it
+ // can't overwrite a change the user just made.
+ const mutationsRef = useRef(0);
 
  const weekRows = useMemo(
  () => buildWeekRows(habits, graph.today, graph.todayKey),
@@ -549,20 +570,48 @@ const Habits = () => {
  }
 
  let cancelled = false;
+ const from = formatDateKey(graph.start);
+ const to = formatDateKey(graph.today);
+ const cached = peekHabits(habitsCacheKey(from, to));
+
+ if (cached) {
+ // Cache hit: render immediately, skip setIsLoading(true) entirely, and
+ // only go back to the network once the entry has aged past the TTL.
+ setHabits(cached);
+ setError(null);
+ setIsLoading(false);
+
+ if (!isHabitsCacheFresh(habitsCacheKey(from, to))) {
+ const mutationsAtStart = mutationsRef.current;
+
+ void fetchHabits(token, from, to)
+ .then((fresh) => {
+ if (
+ !cancelled &&
+ mutationsRef.current === mutationsAtStart
+ ) {
+ setHabits(fresh);
+ }
+ })
+ .catch(() => {
+ // Keep the cached copy on screen; the next visit retries.
+ });
+ }
+
+ return () => {
+ cancelled = true;
+ };
+ }
 
  const loadHabits = async () => {
  setIsLoading(true);
  setError(null);
 
  try {
- const result = await getHabits(
- token,
- formatDateKey(graph.start),
- formatDateKey(graph.today),
- );
+ const result = await fetchHabits(token, from, to);
 
  if (!cancelled) {
- setHabits(result.habits);
+ setHabits(result);
  }
  } catch (err) {
  if (cancelled) {
@@ -618,6 +667,9 @@ const Habits = () => {
  pendingRef.current.add(pendingKey);
  setPending(new Set(pendingRef.current));
  setError(null);
+ // The cached ranges are now stale; the next visit refetches.
+ mutationsRef.current += 1;
+ invalidateHabits();
 
  const applyCompletion = (completed: boolean) => {
  setHabits((current) =>

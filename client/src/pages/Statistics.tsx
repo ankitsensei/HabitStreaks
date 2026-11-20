@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -13,7 +13,7 @@ import {
  SparkIcon,
 } from "../components/Icons";
 import Navbar from "../components/Navbar";
-import { ApiError, getHabits } from "../lib/api";
+import { ApiError } from "../lib/api";
 import type { HabitWithCompletions } from "../lib/api";
 import {
  WEEKDAY_LABELS,
@@ -34,6 +34,13 @@ import type {
  StatsPeriod,
 } from "../lib/habitStats";
 import { clearToken, getToken, useAuth } from "../lib/auth";
+import {
+ fetchHabits,
+ habitsCacheKey,
+ invalidateHabits,
+ isHabitsCacheFresh,
+ peekHabits,
+} from "../lib/habitsCache";
 
 const PERIODS: { id: StatsPeriod; label: string }[] = [
  { id: "day", label: "Day" },
@@ -631,8 +638,21 @@ const Statistics = () => {
  const [cursor, setCursor] = useState(today);
  const [period, setPeriod] = useState<StatsPeriod>("week");
 
- const [habits, setHabits] = useState<HabitWithCompletions[]>([]);
- const [dataKey, setDataKey] = useState<string | null>(null);
+ // Read the shared cache up front so a returning visit paints the charts
+ // immediately instead of the loading skeleton.
+ const initialView = getPeriodViewRange(period, cursor, today);
+ const initialKey = habitsCacheKey(
+ formatDateKey(initialView.from),
+ formatDateKey(initialView.to),
+ );
+ const initialHabits = peekHabits(initialKey);
+
+ const [habits, setHabits] = useState<HabitWithCompletions[]>(
+ () => initialHabits ?? [],
+ );
+ const [dataKey, setDataKey] = useState<string | null>(() =>
+ initialHabits === null ? null : initialKey,
+ );
  const [error, setError] = useState<string | null>(null);
  const [showAll, setShowAll] = useState(false);
  const [retryNonce, setRetryNonce] = useState(0);
@@ -641,8 +661,6 @@ const Statistics = () => {
  >(null);
  const [overallError, setOverallError] = useState<string | null>(null);
  const [overallRetryNonce, setOverallRetryNonce] = useState(0);
-
- const cacheRef = useRef(new Map<string, HabitWithCompletions[]>());
 
  const earliestCreatedKey = useMemo(() => {
  if (habits.length === 0) {
@@ -659,9 +677,10 @@ const Statistics = () => {
  () => getPeriodViewRange(period, cursor, today),
  [period, cursor, today],
  );
- const viewKey = `${formatDateKey(viewRange.from)}:${formatDateKey(
- viewRange.to,
- )}`;
+ const viewKey = habitsCacheKey(
+ formatDateKey(viewRange.from),
+ formatDateKey(viewRange.to),
+ );
  const atCurrent = isPeriodAtCurrent(period, cursor, today);
  const rangeLabel = getRangeLabel(period, cursor, atCurrent);
  const scopeLabel = atCurrent ? PERIOD_SCOPE[period] : rangeLabel;
@@ -681,34 +700,48 @@ const Statistics = () => {
  return;
  }
 
- const cached = cacheRef.current.get(viewKey);
+ let cancelled = false;
+ const from = formatDateKey(viewRange.from);
+ const to = formatDateKey(viewRange.to);
+ const cached = peekHabits(viewKey);
 
  if (cached) {
+ // Cache hit: render immediately, skip the loading skeleton, and only go
+ // back to the network once the entry has aged past the TTL.
  setHabits(cached);
  setDataKey(viewKey);
  setError(null);
- return;
+
+ if (!isHabitsCacheFresh(viewKey)) {
+ void fetchHabits(token, from, to)
+ .then((fresh) => {
+ if (!cancelled) {
+ setHabits(fresh);
+ setDataKey(viewKey);
+ }
+ })
+ .catch(() => {
+ // Keep the cached copy on screen; the next visit retries.
+ });
  }
 
- const requestState = { cancelled: false };
+ return () => {
+ cancelled = true;
+ };
+ }
 
  const loadHabits = async () => {
  setError(null);
 
  try {
- const result = await getHabits(
- token,
- formatDateKey(viewRange.from),
- formatDateKey(viewRange.to),
- );
+ const result = await fetchHabits(token, from, to);
 
- if (!requestState.cancelled) {
- cacheRef.current.set(viewKey, result.habits);
- setHabits(result.habits);
+ if (!cancelled) {
+ setHabits(result);
  setDataKey(viewKey);
  }
  } catch (err) {
- if (requestState.cancelled) {
+ if (cancelled) {
  return;
  }
 
@@ -732,7 +765,7 @@ const Statistics = () => {
  void loadHabits();
 
  return () => {
- requestState.cancelled = true;
+ cancelled = true;
  };
  }, [
  isAuthenticated,
@@ -769,7 +802,7 @@ const Statistics = () => {
  try {
  const results = await Promise.all(
  chunks.map((chunk) =>
- getHabits(
+ fetchHabits(
  token,
  formatDateKey(chunk.from),
  formatDateKey(chunk.to),
@@ -778,9 +811,7 @@ const Statistics = () => {
  );
 
  if (!requestState.cancelled) {
- setOverallHabits(
- mergeHabitChunks(results.map((result) => result.habits)),
- );
+ setOverallHabits(mergeHabitChunks(results));
  }
  } catch (err) {
  if (requestState.cancelled) {
@@ -890,7 +921,7 @@ const Statistics = () => {
  };
 
  const handleRetry = () => {
- cacheRef.current.delete(viewKey);
+ invalidateHabits(viewKey);
  setRetryNonce((nonce) => nonce + 1);
  };
 

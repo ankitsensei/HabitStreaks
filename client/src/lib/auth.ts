@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { invalidateHabits } from "./habitsCache";
 
 export const TOKEN_STORAGE_KEY = "habitstreaks_token";
 const AUTH_CHANGE_EVENT = "habitstreaks:authchange";
@@ -60,6 +61,8 @@ export const setToken = (token: string) => {
 
 export const clearToken = () => {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
+  // Never leave one user's cached habits visible to the next login.
+  invalidateHabits();
   notifyAuthChange();
 };
 
