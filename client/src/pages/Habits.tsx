@@ -1,4 +1,6 @@
 import {
+ memo,
+ useCallback,
  useEffect,
  useLayoutEffect,
  useMemo,
@@ -41,6 +43,24 @@ const MONTHS = [
 ];
 const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
 
+// Shared empty set handed to cards with no in-flight toggle, so the prop
+// reference stays stable and React.memo can bail out for every other habit.
+const EMPTY_PENDING = new Set<string>();
+
+const setsAreEqual = (left: Set<string>, right: Set<string>) => {
+ if (left.size !== right.size) {
+ return false;
+ }
+
+ for (const value of left) {
+ if (!right.has(value)) {
+ return false;
+ }
+ }
+
+ return true;
+};
+
 const primaryButton =
  "inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-[13px] font-medium text-[#0a0a0a] transition hover:bg-[#d4d4d4] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40";
 
@@ -60,16 +80,52 @@ const formatDateKey = (date: Date) => {
  return `${year}-${month}-${day}`;
 };
 
+// Intl.DateTimeFormat construction is expensive, so one instance per
+// style/locale is built once and kept in a module-level map. The rendered
+// string is memoised by date as well: the same 371 dates come back on every
+// pass, so a cell ends up as a map lookup instead of a format() call.
+type DateStyle = "display" | "short";
+
+const DATE_STYLE_OPTIONS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
+ display: { weekday: "short", month: "short", day: "numeric", year: "numeric" },
+ short: { day: "numeric", month: "short" },
+};
+
+const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const formattedDateCache = new Map<string, string>();
+
+const formatStyledDate = (
+ style: DateStyle,
+ locale: string | undefined,
+ date: Date,
+) => {
+ const dateKey = formatDateKey(date);
+ const cacheKey = `${style}:${locale ?? "*"}:${dateKey}`;
+ const cached = formattedDateCache.get(cacheKey);
+
+ if (cached !== undefined) {
+ return cached;
+ }
+
+ const formatterKey = `${style}:${locale ?? "*"}`;
+ let formatter = dateFormatterCache.get(formatterKey);
+
+ if (!formatter) {
+ formatter = new Intl.DateTimeFormat(locale, DATE_STYLE_OPTIONS[style]);
+ dateFormatterCache.set(formatterKey, formatter);
+ }
+
+ const formatted = formatter.format(date);
+ formattedDateCache.set(cacheKey, formatted);
+
+ return formatted;
+};
+
 const formatDisplayDate = (date: Date) =>
- date.toLocaleDateString(undefined, {
- weekday: "short",
- month: "short",
- day: "numeric",
- year: "numeric",
- });
+ formatStyledDate("display", undefined, date);
 
 const formatShortDate = (date: Date) =>
- date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+ formatStyledDate("short", "en-GB", date);
 
 const getGraphRange = () => {
  const today = startOfDay(new Date());
@@ -107,7 +163,7 @@ interface HabitGraphProps {
  ) => void;
 }
 
-const HabitGraph = ({
+const HabitGraph = memo(({
  habit,
  weeks,
  todayKey,
@@ -156,6 +212,8 @@ const HabitGraph = ({
  const isFuture = dateKey > todayKey;
  const isCompleted = completedDays.has(dateKey);
  const isPending = pending.has(`${habit.id}:${dateKey}`);
+ // One format for the pair of labels below instead of one per attribute.
+ const displayDate = formatDisplayDate(day);
 
  return (
  <button
@@ -163,10 +221,8 @@ const HabitGraph = ({
  type="button"
  disabled={isFuture || isPending}
  onClick={() => onToggle(habit, dateKey, isCompleted)}
- title={`${formatDisplayDate(day)} · ${
- isCompleted ? "Done" : "Not done"
- }`}
- aria-label={`${formatDisplayDate(day)}: ${
+ title={`${displayDate} · ${isCompleted ? "Done" : "Not done"}`}
+ aria-label={`${displayDate}: ${
  isCompleted ? "done" : "not done"
  }`}
  aria-pressed={isCompleted}
@@ -193,7 +249,7 @@ const HabitGraph = ({
  </div>
  </div>
  );
-};
+});
 
 // The week-streak strip fills the width next to the habit names with as
 // many day boxes as fit — it never scrolls. Today is always the last box.
@@ -322,7 +378,7 @@ interface WeekStreaksSectionProps {
  onToggle: HabitGraphProps["onToggle"];
 }
 
-const WeekStreaksSection = ({
+const WeekStreaksSection = memo(({
  rows,
  pending,
  onToggle,
@@ -407,6 +463,8 @@ const WeekStreaksSection = ({
  >
  {row.days.slice(-dayCount).map((day) => {
  const isPending = pending.has(`${row.habit.id}:${day.key}`);
+ // One format for the pair of labels below instead of one per attribute.
+ const displayDate = formatDisplayDate(day.date);
 
  return (
  <span
@@ -419,10 +477,10 @@ const WeekStreaksSection = ({
  onClick={() =>
  onToggle(row.habit, day.key, day.isCompleted)
  }
- title={`${formatDisplayDate(day.date)} · ${
+ title={`${displayDate} · ${
  day.isCompleted ? "Done" : "Not done"
  }`}
- aria-label={`${formatDisplayDate(day.date)}: ${
+ aria-label={`${displayDate}: ${
  day.isCompleted ? "done" : "not done"
  }${day.isToday ? " (today)" : ""}`}
  aria-pressed={day.isCompleted}
@@ -449,7 +507,7 @@ const WeekStreaksSection = ({
  </div>
  </section>
  );
-};
+});
 
 interface HabitCardProps {
  habit: HabitWithCompletions;
@@ -459,7 +517,7 @@ interface HabitCardProps {
  onToggle: HabitGraphProps["onToggle"];
 }
 
-const HabitCard = ({
+const HabitCard = memo(({
  habit,
  weeks,
  todayKey,
@@ -499,7 +557,7 @@ const HabitCard = ({
  onToggle={onToggle}
  />
  </article>
-);
+));
 
 const Habits = () => {
  const navigate = useNavigate();
@@ -541,6 +599,26 @@ const Habits = () => {
  () => buildWeekRows(habits, graph.today, graph.todayKey),
  [habits, graph.today, graph.todayKey],
  );
+
+ // Pending keys grouped by habit, so a card only ever receives its own keys
+ // (or the shared empty set). Toggling one habit therefore leaves every other
+ // card's props untouched and React.memo skips them entirely.
+ const pendingByHabit = useMemo(() => {
+ const grouped = new Map<number, Set<string>>();
+
+ for (const key of pending) {
+ const id = Number(key.slice(0, key.indexOf(":")));
+ const own = grouped.get(id);
+
+ if (own) {
+ own.add(key);
+ } else {
+ grouped.set(id, new Set([key]));
+ }
+ }
+
+ return grouped;
+ }, [pending]);
 
  const [notice, setNotice] = useState<{
  kind: "added" | "updated";
@@ -650,7 +728,19 @@ const Habits = () => {
  };
  }, [graph, isAuthenticated, navigate]);
 
- const handleToggle = async (
+ // Publishes the mutated ref to state, but only allocates a new Set when the
+ // contents actually differ — identical contents hand React back the same
+ // reference so it can bail out without re-rendering anything.
+ const commitPending = useCallback(() => {
+ setPending((previous) =>
+ setsAreEqual(previous, pendingRef.current)
+ ? previous
+ : new Set(pendingRef.current),
+ );
+ }, []);
+
+ const handleToggle = useCallback(
+ async (
  habit: HabitWithCompletions,
  dateKey: string,
  wasCompleted: boolean,
@@ -669,20 +759,30 @@ const Habits = () => {
  }
 
  pendingRef.current.add(pendingKey);
- setPending(new Set(pendingRef.current));
+ commitPending();
  setError(null);
  // The cached ranges are now stale; the next visit refetches.
  mutationsRef.current += 1;
  invalidateHabits();
 
  const applyCompletion = (completed: boolean) => {
- setHabits((current) =>
- current.map((item) => {
- if (item.id !== habit.id) {
- return item;
+ setHabits((current) => {
+ const index = current.findIndex((item) => item.id === habit.id);
+
+ if (index === -1) {
+ return current;
  }
 
- const completions = new Set(item.completions);
+ const target = current[index];
+ const hasCompletion = target.completions.includes(dateKey);
+
+ // Already in the requested state (the optimistic update beat the server
+ // response): hand back the same array so memoised cards bail out.
+ if (hasCompletion === completed) {
+ return current;
+ }
+
+ const completions = new Set(target.completions);
 
  if (completed) {
  completions.add(dateKey);
@@ -690,9 +790,13 @@ const Habits = () => {
  completions.delete(dateKey);
  }
 
- return { ...item, completions: Array.from(completions) };
- }),
- );
+ // Rebuild only the habit that changed; every other entry keeps its
+ // identity, so untouched cards skip the re-render.
+ const next = current.slice();
+ next[index] = { ...target, completions: Array.from(completions) };
+
+ return next;
+ });
  };
 
  applyCompletion(!wasCompleted);
@@ -719,9 +823,11 @@ const Habits = () => {
  );
  } finally {
  pendingRef.current.delete(pendingKey);
- setPending(new Set(pendingRef.current));
+ commitPending();
  }
- };
+ },
+ [commitPending, navigate],
+ );
 
  if (!isAuthenticated) {
  return null;
@@ -829,7 +935,7 @@ const Habits = () => {
  habit={habit}
  weeks={graph.weeks}
  todayKey={graph.todayKey}
- pending={pending}
+ pending={pendingByHabit.get(habit.id) ?? EMPTY_PENDING}
  onToggle={handleToggle}
  />
  ))}
