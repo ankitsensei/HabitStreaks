@@ -1,4 +1,5 @@
 import { lookup, Resolver } from "node:dns/promises";
+import type { PoolClient } from "pg";
 import pkg from "pg";
 import dotenv from "dotenv";
 
@@ -59,4 +60,27 @@ const pool = usedFallback
 
 export default {
   query: (text: string, params?: any[]) => pool.query(text, params),
+
+  // Runs `work` on a single dedicated connection inside BEGIN/COMMIT, so its
+  // statements see each other's writes and nothing else can interleave
+  // between them. Rolls back and rethrows if `work` fails.
+  transaction: async <T>(work: (client: PoolClient) => Promise<T>): Promise<T> => {
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+      const result = await work(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // The connection is already broken; releasing it below is enough.
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
 };

@@ -432,37 +432,53 @@ router.post("/:habitId/toggle", async (req: Request, res: Response) => {
   }
 
   try {
-    const habitResult = await db.query(
-      "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
-      [habitId, userId],
-    );
+    const outcome = await db.transaction(async (client) => {
+      // Ownership check and lock in one round trip. Taking the habit row's
+      // lock first means a second, concurrent tap waits here instead of
+      // reading a stale "is this day completed?" answer and then writing on
+      // top of the first tap's result.
+      const habitResult = await client.query(
+        "SELECT id FROM habits WHERE id = $1 AND user_id = $2 FOR UPDATE",
+        [habitId, userId],
+      );
 
-    if (habitResult.rowCount === 0) {
-      return res.status(404).json({ error: "Habit not found." });
-    }
+      if (habitResult.rowCount === 0) {
+        return "missing" as const;
+      }
 
-    const existing = await db.query(
-      "SELECT id FROM habit_completions WHERE habit_id = $1 AND completed_on = $2::date",
-      [habitId, date],
-    );
-
-    if ((existing.rowCount ?? 0) > 0) {
-      await db.query(
-        "DELETE FROM habit_completions WHERE habit_id = $1 AND completed_on = $2::date",
+      // The existence check and the write collapse into a single statement:
+      // remove the day when it is stored, insert it otherwise. `added` reads
+      // `removed`, so only one of the two branches can run.
+      const toggleResult = await client.query(
+        `WITH removed AS (
+           DELETE FROM habit_completions
+           WHERE habit_id = $1 AND completed_on = $2::date
+           RETURNING id
+         ),
+         added AS (
+           INSERT INTO habit_completions (habit_id, completed_on)
+           SELECT $1, $2::date
+           WHERE NOT EXISTS (SELECT 1 FROM removed)
+           ON CONFLICT (habit_id, completed_on) DO NOTHING
+           RETURNING id
+         )
+         SELECT EXISTS (SELECT 1 FROM removed) AS removed`,
         [habitId, date],
       );
 
-      return res.json({ completed: false, date });
+      // With the lock held nothing else can touch these rows, so a miss on
+      // the delete means the insert (or a row that was already there) put the
+      // day back — either way it is completed now.
+      return toggleResult.rows[0].removed
+        ? ("removed" as const)
+        : ("added" as const);
+    });
+
+    if (outcome === "missing") {
+      return res.status(404).json({ error: "Habit not found." });
     }
 
-    await db.query(
-      `INSERT INTO habit_completions (habit_id, completed_on)
-       VALUES ($1, $2::date)
-       ON CONFLICT (habit_id, completed_on) DO NOTHING`,
-      [habitId, date],
-    );
-
-    return res.json({ completed: true, date });
+    return res.json({ completed: outcome === "added", date });
   } catch (error) {
     console.error("Failed to toggle habit completion:", error);
     return res
