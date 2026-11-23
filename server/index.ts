@@ -1,5 +1,11 @@
 /// <reference path="./src/types/express.d.ts" />
-import express, { type Request, type Response } from "express";
+import { join, sep } from "node:path";
+import compression from "compression";
+import express, {
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -34,7 +40,18 @@ const corsOptions: cors.CorsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
+// JSON is the bulk of every API response — gzip it before it hits the wire.
+// compression() skips responses under 1 kB and ones the client can't decode.
+app.use(compression());
 app.use(express.json());
+
+// Nothing is cacheable unless a handler below opts in. API responses are
+// per-user and change on every toggle, so they must never be stored by the
+// browser or an intermediate proxy — a stale habits list reads as lost work.
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 
 // Root health check (app.get, not app.use — app.use("/") would swallow every request)
 app.get("/", (_req: Request, res: Response) => {
@@ -50,6 +67,27 @@ app.get("/api/protected", verifyToken, (req: Request, res: Response) => {
     user: req.user,
   });
 });
+
+// Built client (client/dist), when a deployment ships it — the Vercel client
+// project serves its own copy, so a missing directory is simply a no-op.
+// Vite fingerprints every file under assets/, so those URLs may be cached
+// forever; index.html is not hashed and has to be revalidated, or a stale
+// entry would keep loading an old bundle.
+const clientDist = join(import.meta.dirname, "..", "client", "dist");
+
+app.use(
+  express.static(clientDist, {
+    index: false,
+    setHeaders: (res, filePath) => {
+      res.setHeader(
+        "Cache-Control",
+        filePath.includes(`${sep}assets${sep}`)
+          ? "public, max-age=31536000, immutable"
+          : "no-cache",
+      );
+    },
+  }),
+);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
