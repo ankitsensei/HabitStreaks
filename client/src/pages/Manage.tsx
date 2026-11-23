@@ -21,14 +21,14 @@ import {
  reorderHabits,
  updateHabit,
 } from "../lib/api";
-import type { HabitWithCompletions, NewHabitInput } from "../lib/api";
+import type { HabitMeta, NewHabitInput } from "../lib/api";
 import { clearToken, getToken, useAuth } from "../lib/auth";
 import {
- fetchHabits,
+ fetchHabitsMeta,
  habitsCacheKey,
  invalidateHabits,
  isHabitsCacheFresh,
- peekHabits,
+ peekHabitsMeta,
 } from "../lib/habitsCache";
 
 const formatDateKey = (date: Date) => {
@@ -51,26 +51,26 @@ const Manage = () => {
  const { isAuthenticated } = useAuth();
 
  const initialRange = getLastYearRange();
- const initialKey = habitsCacheKey(initialRange.from, initialRange.to);
- const cachedHabits = peekHabits(initialKey);
+ const initialKey = habitsCacheKey(initialRange.from, initialRange.to, "meta");
+ const cachedHabits = peekHabitsMeta(initialKey);
 
  // Seed from the shared cache so revisiting Manage renders the list
  // immediately instead of flashing the loading state.
- const [habits, setHabits] = useState<HabitWithCompletions[]>(
+ const [habits, setHabits] = useState<HabitMeta[]>(
  () => cachedHabits ?? [],
  );
  const [isLoading, setIsLoading] = useState(() => cachedHabits === null);
  const [error, setError] = useState<string | null>(null);
  const [editingHabit, setEditingHabit] =
- useState<HabitWithCompletions | null>(null);
+ useState<HabitMeta | null>(null);
  const [deletingHabit, setDeletingHabit] =
- useState<HabitWithCompletions | null>(null);
+ useState<HabitMeta | null>(null);
  const [draggingId, setDraggingId] = useState<number | null>(null);
  const [dropHint, setDropHint] = useState<{
  id: number;
  place: "before" | "after";
  } | null>(null);
- const dragStartHabitsRef = useRef<HabitWithCompletions[] | null>(null);
+ const dragStartHabitsRef = useRef<HabitMeta[] | null>(null);
  // Bumped on every mutation so a background revalidation started before it
  // can't overwrite a change the user just made.
  const mutationsRef = useRef(0);
@@ -91,10 +91,10 @@ const Manage = () => {
 
  const requestState = { cancelled: false };
  const { from, to } = getLastYearRange();
- const key = habitsCacheKey(from, to);
- const cached = peekHabits(key);
+ const key = habitsCacheKey(from, to, "meta");
+ const cached = peekHabitsMeta(key);
 
- const applyHabits = (data: HabitWithCompletions[]) => {
+ const applyHabits = (data: HabitMeta[]) => {
  if (requestState.cancelled) {
  return;
  }
@@ -112,7 +112,7 @@ const Manage = () => {
  if (!isHabitsCacheFresh(key)) {
  const mutationsAtStart = mutationsRef.current;
 
- void fetchHabits(token, from, to)
+ void fetchHabitsMeta(token, from, to)
  .then((fresh) => {
  if (mutationsRef.current === mutationsAtStart) {
  applyHabits(fresh);
@@ -133,7 +133,7 @@ const Manage = () => {
  setError(null);
 
  try {
- const result = await fetchHabits(token, from, to);
+ const result = await fetchHabitsMeta(token, from, to);
 
  applyHabits(result);
  } catch (err) {
@@ -187,11 +187,11 @@ const Manage = () => {
  mutationsRef.current += 1;
  invalidateHabits();
 
+ // The update response carries no completed_days, so the server's fresh
+ // fields are spread over the row we already have instead of replacing it.
  setHabits((current) =>
  current.map((item) =>
- item.id === result.habit.id
- ? { ...result.habit, completions: item.completions }
- : item,
+ item.id === result.habit.id ? { ...item, ...result.habit } : item,
  ),
  );
  setEditingHabit(null);
@@ -252,8 +252,8 @@ const Manage = () => {
  };
 
  const saveOrder = async (
- next: HabitWithCompletions[],
- previous: HabitWithCompletions[],
+ next: HabitMeta[],
+ previous: HabitMeta[],
  ) => {
  const token = getToken();
 
@@ -294,7 +294,7 @@ const Manage = () => {
  // so clicks never turn into accidental drags.
  const handleDragStart = (
  event: DragEvent<HTMLElement>,
- habit: HabitWithCompletions,
+ habit: HabitMeta,
  ) => {
  if ((event.target as HTMLElement).closest("button")) {
  event.preventDefault();
@@ -539,8 +539,8 @@ const Manage = () => {
  title="Check-ins in the last 12 months"
  className="hidden shrink-0 rounded-full bg-[#1e1e1e] px-2 py-0.5 text-[10.5px] font-medium text-[#a7a7a7] sm:inline"
  >
- {habit.completions.length}{" "}
- {habit.completions.length === 1 ? "day" : "days"}
+ {habit.completed_days}{" "}
+ {habit.completed_days === 1 ? "day" : "days"}
  </span>
 
  <div className="flex shrink-0 items-center gap-1">

@@ -205,8 +205,22 @@ export interface HabitWithCompletions extends Habit {
   completions: string[];
 }
 
+/**
+ * Habit row from `?fields=meta`: no completion dates, just how many check-ins
+ * fall inside the requested range.
+ */
+export interface HabitMeta extends Habit {
+  completed_days: number;
+}
+
 export interface HabitsResult {
   habits: HabitWithCompletions[];
+  from: string;
+  to: string;
+}
+
+export interface HabitsMetaResult {
+  habits: HabitMeta[];
   from: string;
   to: string;
 }
@@ -216,11 +230,14 @@ export interface ToggleCompletionResult {
   date: string;
 }
 
+const habitsPath = (from: string, to: string, fields?: "meta") =>
+  `/api/habits?${fields === undefined ? "" : `fields=${fields}&`}from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
 export const getHabits = (token: string, from: string, to: string) =>
-  get<HabitsResult>(
-    `/api/habits?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
-    token,
-  );
+  get<HabitsResult>(habitsPath(from, to), token);
+
+export const getHabitsMeta = (token: string, from: string, to: string) =>
+  get<HabitsMetaResult>(habitsPath(from, to, "meta"), token);
 
 export const toggleHabitCompletion = (
   token: string,

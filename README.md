@@ -185,7 +185,7 @@ One-time configuration (the #1 source of "it doesn't work" — check these first
 | `POST` | `/api/auth/resend-otp` | Re-send verification code |
 | `POST` | `/api/auth/login` | Email + password → JWT |
 | `POST` | `/api/auth/google` | Auth0 code exchange → JWT |
-| `GET` | `/api/habits?from&to` | Habits + completions in a date range 🔒 |
+| `GET` | `/api/habits?from&to` | Habits + completions in a date range 🔒 — add `fields=meta` for habit metadata + a check-in count instead of the completion history |
 | `POST` | `/api/habits/newhabit` | Create habit 🔒 |
 | `PATCH` | `/api/habits/:id` | Update habit 🔒 |
 | `DELETE` | `/api/habits/:id` | Delete habit 🔒 |

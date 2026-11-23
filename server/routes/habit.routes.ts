@@ -127,6 +127,8 @@ const parseHabitInput = (body: Record<string, unknown>): HabitInputResult => {
 };
 
 // List the signed-in user's habits with completions for a date range.
+// Pass ?fields=meta to get habit metadata and a check-in count instead of
+// the completion history itself.
 router.get("/", async (req: Request, res: Response) => {
   const userId = getUserId(req);
 
@@ -172,7 +174,44 @@ router.get("/", async (req: Request, res: Response) => {
       .json({ error: "The date range must be 371 days or fewer." });
   }
 
+  const fieldsQuery = req.query.fields;
+
+  if (
+    fieldsQuery !== undefined &&
+    (typeof fieldsQuery !== "string" ||
+      (fieldsQuery !== "meta" && fieldsQuery !== "full"))
+  ) {
+    return res
+      .status(400)
+      .json({ error: 'fields must be either "meta" or "full".' });
+  }
+
+  const metaOnly = fieldsQuery === "meta";
+
   try {
+    if (metaOnly) {
+      // ?fields=meta: habit metadata plus one aggregated check-in count.
+      // One query instead of two, and a single integer per habit instead of
+      // up to 371 date strings — enough for a list that never draws the
+      // heatmap.
+      const habitsResult = await db.query(
+        `SELECT h.id, h.user_id, h.name, h.icon, h.color, h.category,
+                h.target_per_week, h.created_at, h.updated_at,
+                (
+                  SELECT count(*)
+                  FROM habit_completions c
+                  WHERE c.habit_id = h.id
+                    AND c.completed_on BETWEEN $2::date AND $3::date
+                )::int AS completed_days
+         FROM habits h
+         WHERE h.user_id = $1
+         ORDER BY h.sort_order ASC, h.id ASC`,
+        [userId, from, to],
+      );
+
+      return res.json({ habits: habitsResult.rows, from, to });
+    }
+
     const habitsResult = await db.query(
       `SELECT id, user_id, name, icon, color, category, target_per_week, created_at, updated_at
        FROM habits
