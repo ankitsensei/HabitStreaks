@@ -28,7 +28,14 @@ const Navbar = () => {
     <header className="sticky top-0 z-40 border-b border-[#1e1e1e] bg-[#0a0a0a]/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-5">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
-          <img src={logo} alt="HabitStreaks" className="h-8 w-8 rounded-lg" />
+          <img
+            src={logo}
+            alt="HabitStreaks"
+            width={32}
+            height={32}
+            decoding="async"
+            className="h-8 w-8 rounded-lg"
+          />
           <span className="hidden text-[15px] font-medium tracking-[-0.01em] text-white sm:inline">
             HabitStreaks
           </span>
