@@ -10,21 +10,43 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * True for the rejection a cancelled fetch produces. Aborting is a deliberate
+ * act by the caller, not a failure, so it is checked before any ApiError
+ * handling — both here and in the pages that consume these requests.
+ */
+export const isAbortError = (err: unknown): boolean =>
+  typeof err === "object" &&
+  err !== null &&
+  "name" in err &&
+  (err as { name: unknown }).name === "AbortError";
+
 async function request<T>(path: string, init: RequestInit): Promise<T> {
   let response: Response;
 
   try {
     response = await fetch(`${API_BASE}${path}`, init);
-  } catch {
+  } catch (err) {
+    // An aborted request is a cancellation, not a connectivity problem.
+    if (isAbortError(err)) {
+      throw err;
+    }
+
     throw new ApiError(
       "We couldn't reach the server. Check your connection and try again.",
       0,
     );
   }
 
-  const data = (await response.json().catch(() => null)) as
-    | (T & { error?: string })
-    | null;
+  const data = (await response.json().catch((err: unknown) => {
+    // Aborted while the body was streaming in: surface it as an AbortError
+    // instead of downgrading it to a silent null payload.
+    if (isAbortError(err)) {
+      throw err;
+    }
+
+    return null;
+  })) as (T & { error?: string }) | null;
 
   if (!response.ok) {
     throw new ApiError(
@@ -51,10 +73,15 @@ async function post<T>(
   });
 }
 
-async function get<T>(path: string, token?: string): Promise<T> {
+async function get<T>(
+  path: string,
+  token?: string,
+  signal?: AbortSignal,
+): Promise<T> {
   return request<T>(path, {
     method: "GET",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
+    signal,
   });
 }
 
@@ -233,11 +260,19 @@ export interface ToggleCompletionResult {
 const habitsPath = (from: string, to: string, fields?: "meta") =>
   `/api/habits?${fields === undefined ? "" : `fields=${fields}&`}from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
-export const getHabits = (token: string, from: string, to: string) =>
-  get<HabitsResult>(habitsPath(from, to), token);
+export const getHabits = (
+  token: string,
+  from: string,
+  to: string,
+  signal?: AbortSignal,
+) => get<HabitsResult>(habitsPath(from, to), token, signal);
 
-export const getHabitsMeta = (token: string, from: string, to: string) =>
-  get<HabitsMetaResult>(habitsPath(from, to, "meta"), token);
+export const getHabitsMeta = (
+  token: string,
+  from: string,
+  to: string,
+  signal?: AbortSignal,
+) => get<HabitsMetaResult>(habitsPath(from, to, "meta"), token, signal);
 
 export const toggleHabitCompletion = (
   token: string,

@@ -12,7 +12,10 @@ import type { HabitMeta, HabitWithCompletions } from "./api";
 //     renders the heatmap,
 //   * serves an entry for ~30 seconds without touching the network,
 //   * deduplicates concurrent requests for one key through a single
-//     in-flight promise.
+//     in-flight promise,
+//   * only aborts an in-flight request once every caller has cancelled it,
+//     so one page navigating away never kills a download another page is
+//     still waiting on.
 const TTL_MS = 30_000;
 
 /** `full` = habit rows + completion dates, `meta` = rows + a check-in count. */
@@ -30,12 +33,28 @@ interface CacheEntry {
   fetchedAt: number;
 }
 
+interface InFlight {
+  promise: Promise<unknown>;
+  controller: AbortController;
+  /** Callers still relying on this request — see fetchCached. */
+  waiters: number;
+  /** Set once the request has been aborted for lack of waiters. */
+  aborted: boolean;
+}
+
 // Bumped by invalidateHabits() so a request that started before a mutation
 // can never write its (now stale) response back into the cache.
 let generation = 0;
 
 const cache = new Map<string, CacheEntry>();
-const inFlight = new Map<string, Promise<unknown>>();
+const inFlight = new Map<string, InFlight>();
+
+/**
+ * Reserved key for a dataset assembled on the client instead of fetched in
+ * one call — Statistics merges its all-time history from per-year chunks.
+ * Range keys always contain a colon, so it can never collide with one.
+ */
+export const OVERALL_HABITS_KEY = "overall";
 
 /**
  * Cache key for a date range: the `from`/`to` pair, both YYYY-MM-DD. Meta
@@ -74,39 +93,97 @@ export const isHabitsCacheFresh = (key: string): boolean => {
  * flight for that key and caching the result for TTL_MS. Concurrent callers
  * share one promise, so two pages mounting at the same moment still produce a
  * single request. Failures are never cached, so a retry starts a fresh one.
+ *
+ * Each caller registers as a waiter and releases that claim when its signal
+ * aborts or its promise settles, whichever happens first. The underlying
+ * fetch is aborted only when the last waiter is gone: a caller without a
+ * signal never cancels, so it keeps the shared request alive until it
+ * completes on its own.
  */
 const fetchCached = <T>(
   key: string,
   fields: HabitsFields,
-  request: () => Promise<T[]>,
+  request: (signal: AbortSignal) => Promise<T[]>,
+  signal?: AbortSignal,
 ): Promise<T[]> => {
-  const pending = inFlight.get(key);
-
-  if (pending) {
-    return pending as Promise<T[]>;
+  if (signal?.aborted) {
+    return Promise.reject(signal.reason);
   }
 
-  const requestGeneration = generation;
+  let flight = inFlight.get(key);
 
-  const promise = request()
-    .then((data) => {
-      if (requestGeneration === generation) {
-        cache.set(key, { fields, data, fetchedAt: Date.now() });
-      }
+  if (!flight || flight.aborted) {
+    const controller = new AbortController();
+    const requestGeneration = generation;
 
-      return data;
-    })
-    .finally(() => {
-      // Only clear our own entry: invalidateHabits() may already have
-      // replaced it with a newer request for the same key.
-      if (inFlight.get(key) === promise) {
+    const promise: Promise<unknown> = request(controller.signal)
+      .then((data) => {
+        if (requestGeneration === generation) {
+          cache.set(key, { fields, data, fetchedAt: Date.now() });
+        }
+
+        return data;
+      })
+      .finally(() => {
+        // Only clear our own entry: invalidateHabits() may already have
+        // replaced it with a newer request for the same key.
+        if (inFlight.get(key)?.controller === controller) {
+          inFlight.delete(key);
+        }
+      });
+
+    flight = { promise, controller, waiters: 0, aborted: false };
+    inFlight.set(key, flight);
+  }
+
+  const active = flight;
+  active.waiters += 1;
+
+  let released = false;
+  const release = () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    active.waiters -= 1;
+
+    // Nobody wants this answer anymore, so stop downloading it. The entry is
+    // dropped immediately: a caller arriving now must start a fresh request
+    // rather than join one that is about to reject.
+    if (active.waiters === 0 && !active.aborted) {
+      active.aborted = true;
+      active.controller.abort();
+
+      if (inFlight.get(key) === active) {
         inFlight.delete(key);
       }
-    });
+    }
+  };
 
-  inFlight.set(key, promise);
+  // Wrap the shared promise so a caller can reject early on its own abort,
+  // even while other waiters keep the shared request running.
+  return new Promise<T[]>((resolve, reject) => {
+    const onAbort = () => {
+      release();
+      reject(signal?.reason);
+    };
 
-  return promise;
+    active.promise.then(
+      (data) => {
+        signal?.removeEventListener("abort", onAbort);
+        release();
+        resolve(data as T[]);
+      },
+      (err) => {
+        signal?.removeEventListener("abort", onAbort);
+        release();
+        reject(err);
+      },
+    );
+
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
 };
 
 /** A date range with completion history — what the heatmap and statistics need. */
@@ -114,9 +191,16 @@ export const fetchHabits = (
   token: string,
   from: string,
   to: string,
+  signal?: AbortSignal,
 ): Promise<HabitWithCompletions[]> =>
-  fetchCached(habitsCacheKey(from, to), "full", () =>
-    getHabits(token, from, to).then((result) => result.habits),
+  fetchCached(
+    habitsCacheKey(from, to),
+    "full",
+    (requestSignal) =>
+      getHabits(token, from, to, requestSignal).then(
+        (result) => result.habits,
+      ),
+    signal,
   );
 
 /** A date range as metadata plus a check-in count — enough for the Manage list. */
@@ -124,10 +208,29 @@ export const fetchHabitsMeta = (
   token: string,
   from: string,
   to: string,
+  signal?: AbortSignal,
 ): Promise<HabitMeta[]> =>
-  fetchCached(habitsCacheKey(from, to, "meta"), "meta", () =>
-    getHabitsMeta(token, from, to).then((result) => result.habits),
+  fetchCached(
+    habitsCacheKey(from, to, "meta"),
+    "meta",
+    (requestSignal) =>
+      getHabitsMeta(token, from, to, requestSignal).then(
+        (result) => result.habits,
+      ),
+    signal,
   );
+
+/**
+ * Stores a dataset assembled on the client — Statistics merges its all-time
+ * history from per-year chunks — under `key`, with the same TTL and
+ * deduplication as a plain range fetch, so revisiting the page reuses the
+ * merged list instead of re-downloading every chunk.
+ */
+export const fetchDerivedHabits = (
+  key: string,
+  load: (signal: AbortSignal) => Promise<HabitWithCompletions[]>,
+  signal?: AbortSignal,
+): Promise<HabitWithCompletions[]> => fetchCached(key, "full", load, signal);
 
 /**
  * Drops one key — or, with no key, the whole cache — after a mutation, so the

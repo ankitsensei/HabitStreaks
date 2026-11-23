@@ -13,7 +13,7 @@ import {
  SparkIcon,
 } from "../components/Icons";
 import Navbar from "../components/Navbar";
-import { ApiError } from "../lib/api";
+import { ApiError, isAbortError } from "../lib/api";
 import type { HabitWithCompletions } from "../lib/api";
 import {
  WEEKDAY_LABELS,
@@ -31,10 +31,14 @@ import {
 import type {
  ComparisonBucket,
  OverallSummary,
+ PeriodSummary,
  StatsPeriod,
+ StatsRange,
 } from "../lib/habitStats";
 import { clearToken, getToken, useAuth } from "../lib/auth";
 import {
+ OVERALL_HABITS_KEY,
+ fetchDerivedHabits,
  fetchHabits,
  habitsCacheKey,
  invalidateHabits,
@@ -506,6 +510,70 @@ const mergeHabitChunks = (chunks: HabitWithCompletions[][]) => {
 const getOverallChunks = (from: Date, to: Date) =>
  splitRange({ from, to }, OVERALL_CHUNK_DAYS);
 
+// Computed summaries are memoized on the identity of the habits array they
+// were built from. The shared cache hands back the same array on every
+// visit, so returning to this page reuses the previous computation instead
+// of re-walking every completion; the date keys keep a stale result from
+// surviving a range change or a day rollover.
+const periodSummaryCache = new WeakMap<
+ HabitWithCompletions[],
+ Map<string, Record<StatsPeriod, PeriodSummary>>
+>();
+
+const memoPeriodSummaries = (
+ habits: HabitWithCompletions[],
+ range: StatsRange,
+ today: Date,
+): Record<StatsPeriod, PeriodSummary> => {
+ const key = `${formatDateKey(range.from)}:${formatDateKey(range.to)}:${formatDateKey(today)}`;
+ let byRange = periodSummaryCache.get(habits);
+
+ if (!byRange) {
+ byRange = new Map();
+ periodSummaryCache.set(habits, byRange);
+ }
+
+ const cached = byRange.get(key);
+
+ if (cached) {
+ return cached;
+ }
+
+ const summaries = buildPeriodSummaries(habits, range, today);
+ byRange.set(key, summaries);
+
+ return summaries;
+};
+
+const overallSummaryCache = new WeakMap<
+ HabitWithCompletions[],
+ Map<string, OverallSummary>
+>();
+
+const memoOverallSummary = (
+ habits: HabitWithCompletions[],
+ today: Date,
+): OverallSummary => {
+ const key = formatDateKey(today);
+ let byDay = overallSummaryCache.get(habits);
+
+ if (!byDay) {
+ byDay = new Map();
+ overallSummaryCache.set(habits, byDay);
+ }
+
+ const cached = byDay.get(key);
+
+ if (cached) {
+ return cached;
+ }
+
+ const summary = buildOverallSummary(habits, today);
+ byDay.set(key, summary);
+
+ return summary;
+};
+
 interface OverallSectionProps {
  overall: OverallSummary;
  habitCount: number;
@@ -658,7 +726,7 @@ const Statistics = () => {
  const [retryNonce, setRetryNonce] = useState(0);
  const [overallHabits, setOverallHabits] = useState<
  HabitWithCompletions[] | null
- >(null);
+ >(() => peekHabits(OVERALL_HABITS_KEY));
  const [overallError, setOverallError] = useState<string | null>(null);
  const [overallRetryNonce, setOverallRetryNonce] = useState(0);
 
@@ -700,16 +768,15 @@ const Statistics = () => {
  return;
  }
 
- const requestState = { cancelled: false };
+ // Aborting on cleanup cancels this range's request — and only this one:
+ // the cache refcounts waiters, so a shared download another page is using
+ // keeps running.
+ const controller = new AbortController();
  const from = formatDateKey(viewRange.from);
  const to = formatDateKey(viewRange.to);
  const cached = peekHabits(viewKey);
 
  const applyHabits = (data: HabitWithCompletions[]) => {
- if (requestState.cancelled) {
- return;
- }
-
  setHabits(data);
  setDataKey(viewKey);
  setError(null);
@@ -721,27 +788,26 @@ const Statistics = () => {
  applyHabits(cached);
 
  if (!isHabitsCacheFresh(viewKey)) {
- void fetchHabits(token, from, to)
+ void fetchHabits(token, from, to, controller.signal)
  .then((fresh) => applyHabits(fresh))
  .catch(() => {
  // Keep the cached copy on screen; the next visit retries.
  });
  }
 
- return () => {
- requestState.cancelled = true;
- };
+ return () => controller.abort();
  }
 
  const loadHabits = async () => {
  setError(null);
 
  try {
- const result = await fetchHabits(token, from, to);
+ const result = await fetchHabits(token, from, to, controller.signal);
 
  applyHabits(result);
  } catch (err) {
- if (requestState.cancelled) {
+ // The range changed or the page was left — not a failure to report.
+ if (isAbortError(err)) {
  return;
  }
 
@@ -764,9 +830,7 @@ const Statistics = () => {
 
  void loadHabits();
 
- return () => {
- requestState.cancelled = true;
- };
+ return () => controller.abort();
  }, [
  isAuthenticated,
  navigate,
@@ -777,11 +841,7 @@ const Statistics = () => {
  ]);
 
  useEffect(() => {
- if (
- !isAuthenticated ||
- earliestCreatedKey === null ||
- overallHabits !== null
- ) {
+ if (!isAuthenticated || earliestCreatedKey === null) {
  return;
  }
 
@@ -794,27 +854,36 @@ const Statistics = () => {
  const earliestCreated = new Date(`${earliestCreatedKey}T00:00:00`);
  const start = new Date(earliestCreated.getFullYear(), 0, 1);
  const chunks = getOverallChunks(start, today);
- const requestState = { cancelled: false };
+ const controller = new AbortController();
+ const cached = peekHabits(OVERALL_HABITS_KEY);
 
- const loadOverall = async () => {
+ const applyOverall = (data: HabitWithCompletions[]) => {
+ setOverallHabits(data);
  setOverallError(null);
+ };
 
- try {
- const results = await Promise.all(
+ const refresh = () => {
+ // The merged dataset lives in the shared cache under its own key, so a
+ // returning visit reuses it instead of re-downloading every chunk.
+ void fetchDerivedHabits(
+ OVERALL_HABITS_KEY,
+ (signal) =>
+ Promise.all(
  chunks.map((chunk) =>
  fetchHabits(
  token,
  formatDateKey(chunk.from),
  formatDateKey(chunk.to),
+ signal,
  ),
  ),
- );
-
- if (!requestState.cancelled) {
- setOverallHabits(mergeHabitChunks(results));
- }
- } catch (err) {
- if (requestState.cancelled) {
+ ).then(mergeHabitChunks),
+ controller.signal,
+ )
+ .then(applyOverall)
+ .catch((err: unknown) => {
+ // The page was left or the effect re-ran — not a failure to report.
+ if (isAbortError(err)) {
  return;
  }
 
@@ -827,34 +896,42 @@ const Statistics = () => {
  return;
  }
 
+ // A stale copy beats an error banner; only a cold load reports one.
+ if (cached === null) {
  setOverallError(
  err instanceof ApiError
  ? err.message
  : "Couldn't load your overall stats. Please try again.",
  );
  }
+ });
  };
 
- void loadOverall();
+ if (cached) {
+ // Cache hit: paint the merged dataset immediately, then refresh it in
+ // the background once the entry has aged past the TTL.
+ applyOverall(cached);
+ }
 
- return () => {
- requestState.cancelled = true;
- };
+ if (!cached || !isHabitsCacheFresh(OVERALL_HABITS_KEY)) {
+ refresh();
+ }
+
+ return () => controller.abort();
  }, [
  earliestCreatedKey,
  isAuthenticated,
  navigate,
- overallHabits,
  overallRetryNonce,
  today,
  ]);
 
  const summaries = useMemo(
- () => buildPeriodSummaries(habits, viewRange, today),
+ () => memoPeriodSummaries(habits, viewRange, today),
  [habits, viewRange, today],
  );
  const overall = useMemo(
- () => (overallHabits ? buildOverallSummary(overallHabits, today) : null),
+ () => (overallHabits ? memoOverallSummary(overallHabits, today) : null),
  [overallHabits, today],
  );
 
@@ -926,6 +1003,9 @@ const Statistics = () => {
  };
 
  const handleOverallRetry = () => {
+ // Drop the merged dataset too: the retry must re-download it, not re-read
+ // the same cached copy that just failed to refresh.
+ invalidateHabits(OVERALL_HABITS_KEY);
  setOverallError(null);
  setOverallRetryNonce((nonce) => nonce + 1);
  };
