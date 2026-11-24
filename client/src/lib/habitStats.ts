@@ -65,7 +65,9 @@ export const formatDateKey = (date: Date) => {
 export const getHabitCreatedKey = (habit: HabitWithCompletions) =>
   formatDateKey(startOfDay(new Date(habit.created_at)));
 
-const parseDateKey = (key: string) => new Date(`${key}T00:00:00`);
+// Local calendar day for a YYYY-MM-DD key. Parses as a *local* day (not UTC),
+// which matters for dates near midnight — e.g. a server-reported tracking date.
+export const parseDateKey = (key: string) => new Date(`${key}T00:00:00`);
 
 // The statistics window covers the last 12 calendar months, starting from the
 // first day of the oldest month, so monthly charts always have full data.
@@ -86,27 +88,6 @@ export const getStatsRange = (): StatsRange => {
 };
 
 export const getToday = () => startOfDay(new Date());
-
-// Splits a date range into inclusive chunks no longer than maxDays, newest
-// chunk first. Used to fetch all-time history under the API's range limit.
-export const splitRange = (
-  range: StatsRange,
-  maxDays: number,
-): StatsRange[] => {
-  const chunks: StatsRange[] = [];
-  let chunkEnd = startOfDay(range.to);
-
-  while (chunkEnd.getTime() >= range.from.getTime()) {
-    const chunkStart = addDays(chunkEnd, -(maxDays - 1));
-    const from =
-      chunkStart.getTime() < range.from.getTime() ? range.from : chunkStart;
-
-    chunks.push({ from, to: chunkEnd });
-    chunkEnd = addDays(from, -1);
-  }
-
-  return chunks;
-};
 
 export interface Streaks {
   current: number;
@@ -517,130 +498,11 @@ export const buildPeriodSummaries = (
 };
 
 // --- All-time overall summary ----------------------------------------------
-
-export interface OverallHabitSummary {
-  habit: HabitWithCompletions;
-  total: number;
-  currentStreak: number;
-  longestStreak: number;
-  completionRate: number;
-}
-
-export interface OverallSummary {
-  totalCheckIns: number;
-  activeDays: number;
-  perfectDays: number;
-  currentStreak: number;
-  longestStreak: number;
-  completionRate: number;
-  trackingSince: Date;
-  habitSummaries: OverallHabitSummary[];
-}
-
-const getDaysActive = (created: Date, today: Date) =>
-  Math.max(
-    1,
-    Math.round((today.getTime() - created.getTime()) / DAY_MS) + 1,
-  );
-
-const getCompletionRate = (total: number, expected: number) =>
-  expected <= 0 ? 0 : Math.min(100, Math.round((total / expected) * 100));
-
-// Lifetime stats across every habit, computed from all of their completions.
-export const buildOverallSummary = (
-  habits: HabitWithCompletions[],
-  today: Date,
-): OverallSummary => {
-  const todayKey = formatDateKey(today);
-  const createdDates = habits.map((habit) =>
-    startOfDay(new Date(habit.created_at)),
-  );
-  const earliestCreated =
-    createdDates.reduce<Date | null>(
-      (earliest, created) =>
-        earliest === null || created < earliest ? created : earliest,
-      null,
-    ) ?? startOfDay(today);
-  const completionKeys = habits.flatMap((habit) => habit.completions);
-  const earliestCompletionKey =
-    completionKeys.length > 0
-      ? completionKeys.reduce(
-          (earliest, key) => (key < earliest ? key : earliest),
-          completionKeys[0],
-        )
-      : null;
-  const earliestCompletion =
-    earliestCompletionKey === null
-      ? null
-      : parseDateKey(earliestCompletionKey);
-  const trackingSince =
-    earliestCompletion !== null && earliestCompletion < earliestCreated
-      ? earliestCompletion
-      : earliestCreated;
-  const completionSets = habits.map((habit) => new Set(habit.completions));
-
-  const habitSummaries = habits.map((habit, index) => {
-    const streaks = computeStreaks(habit.completions, todayKey);
-    const daysActive = getDaysActive(createdDates[index], today);
-
-    return {
-      habit,
-      total: habit.completions.length,
-      currentStreak: streaks.current,
-      longestStreak: streaks.longest,
-      completionRate: getCompletionRate(
-        habit.completions.length,
-        (habit.target_per_week / 7) * daysActive,
-      ),
-    };
-  });
-
-  const totalCheckIns = habitSummaries.reduce(
-    (sum, entry) => sum + entry.total,
-    0,
-  );
-  const allCompletions = Array.from(
-    new Set(habits.flatMap((habit) => habit.completions)),
-  );
-  const overallStreaks = computeStreaks(allCompletions, todayKey);
-  const elapsedDays = getDaysActive(earliestCreated, today);
-
-  let perfectDays = 0;
-
-  for (let offset = 0; offset < elapsedDays; offset += 1) {
-    const date = addDays(earliestCreated, offset);
-    const key = formatDateKey(date);
-    const hasEligibleHabit = createdDates.some((created) => created <= date);
-
-    if (
-      hasEligibleHabit &&
-      habits.every(
-        (_, index) =>
-          createdDates[index] > date || completionSets[index].has(key),
-      )
-    ) {
-      perfectDays += 1;
-    }
-  }
-
-  const expectedCheckIns = habits.reduce(
-    (sum, habit, index) =>
-      sum +
-      (habit.target_per_week / 7) * getDaysActive(createdDates[index], today),
-    0,
-  );
-
-  return {
-    totalCheckIns,
-    activeDays: allCompletions.length,
-    perfectDays,
-    currentStreak: overallStreaks.current,
-    longestStreak: overallStreaks.longest,
-    completionRate: getCompletionRate(totalCheckIns, expectedCheckIns),
-    trackingSince,
-    habitSummaries,
-  };
-};
+//
+// The all-time ("Overall") numbers are no longer computed here: the server
+// aggregates them in GET /api/habits/stats (see HabitStatsSummary), so a user
+// with years of history downloads seven numbers instead of every completion
+// date. The period summaries above still run client-side over the raw range.
 
 // Check-ins per week for the last WEEKS_SHOWN weeks, oldest week first.
 // Dates are compared with day-level rounding so daylight saving shifts

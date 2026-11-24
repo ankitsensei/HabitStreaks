@@ -1,5 +1,10 @@
-import { getHabits, getHabitsMeta } from "./api";
-import type { HabitMeta, HabitWithCompletions } from "./api";
+import { getHabitStats, getHabits, getHabitsMeta } from "./api";
+import type {
+  HabitMeta,
+  HabitStatsResult,
+  HabitWithCompletions,
+  StatsPeriodKey,
+} from "./api";
 
 // Hand-rolled shared cache for /api/habits responses.
 //
@@ -21,13 +26,17 @@ const TTL_MS = 30_000;
 /** `full` = habit rows + completion dates, `meta` = rows + a check-in count. */
 type HabitsFields = "full" | "meta";
 
+/** Everything the cache stores: the two habit modes plus aggregated stats. */
+type CacheKind = HabitsFields | "stats";
+
 interface CacheEntry {
-  fields: HabitsFields;
+  fields: CacheKind;
   /**
    * The payload for `fields` — `HabitWithCompletions[]` for full entries,
-   * `HabitMeta[]` for meta ones. Kept untyped here because the core fetcher
-   * is generic; peek() narrows it with the `fields` discriminator, so the two
-   * shapes can never be handed to the wrong caller.
+   * `HabitMeta[]` for meta ones, `HabitStatsResult` for stats ones. Kept
+   * untyped here because the core fetcher is generic; peek() narrows it with
+   * the `fields` discriminator, so the shapes can never be handed to the
+   * wrong caller.
    */
   data: unknown;
   fetchedAt: number;
@@ -50,13 +59,6 @@ const cache = new Map<string, CacheEntry>();
 const inFlight = new Map<string, InFlight>();
 
 /**
- * Reserved key for a dataset assembled on the client instead of fetched in
- * one call — Statistics merges its all-time history from per-year chunks.
- * Range keys always contain a colon, so it can never collide with one.
- */
-export const OVERALL_HABITS_KEY = "overall";
-
-/**
  * Cache key for a date range: the `from`/`to` pair, both YYYY-MM-DD. Meta
  * requests live in their own namespace, so the two modes can never hand each
  * other's payload to a caller.
@@ -67,19 +69,29 @@ export const habitsCacheKey = (
   fields: HabitsFields = "full",
 ): string => (fields === "full" ? `${from}:${to}` : `${from}:${to}:meta`);
 
-const peek = <T>(key: string, fields: HabitsFields): T[] | null => {
+/**
+ * Cache key for aggregated statistics. Range keys always start with a date,
+ * so the `stats:` prefix can never collide with one.
+ */
+export const statsCacheKey = (
+  from: string,
+  to: string,
+  period: StatsPeriodKey,
+) => `stats:${from}:${to}:${period}`;
+
+const peek = <T>(key: string, fields: CacheKind): T | null => {
   const entry = cache.get(key);
 
-  return entry?.fields === fields ? (entry.data as T[]) : null;
+  return entry?.fields === fields ? (entry.data as T) : null;
 };
 
 /** The full habits we last stored for a key, or null if never fetched. */
 export const peekHabits = (key: string): HabitWithCompletions[] | null =>
-  peek<HabitWithCompletions>(key, "full");
+  peek<HabitWithCompletions[]>(key, "full");
 
 /** The metadata-only habits we last stored for a key, or null if never fetched. */
 export const peekHabitsMeta = (key: string): HabitMeta[] | null =>
-  peek<HabitMeta>(key, "meta");
+  peek<HabitMeta[]>(key, "meta");
 
 /** True when an entry exists and is younger than the TTL. */
 export const isHabitsCacheFresh = (key: string): boolean => {
@@ -102,10 +114,10 @@ export const isHabitsCacheFresh = (key: string): boolean => {
  */
 const fetchCached = <T>(
   key: string,
-  fields: HabitsFields,
-  request: (signal: AbortSignal) => Promise<T[]>,
+  fields: CacheKind,
+  request: (signal: AbortSignal) => Promise<T>,
   signal?: AbortSignal,
-): Promise<T[]> => {
+): Promise<T> => {
   if (signal?.aborted) {
     return Promise.reject(signal.reason);
   }
@@ -163,7 +175,7 @@ const fetchCached = <T>(
 
   // Wrap the shared promise so a caller can reject early on its own abort,
   // even while other waiters keep the shared request running.
-  return new Promise<T[]>((resolve, reject) => {
+  return new Promise<T>((resolve, reject) => {
     const onAbort = () => {
       release();
       reject(signal?.reason);
@@ -173,7 +185,7 @@ const fetchCached = <T>(
       (data) => {
         signal?.removeEventListener("abort", onAbort);
         release();
-        resolve(data as T[]);
+        resolve(data as T);
       },
       (err) => {
         signal?.removeEventListener("abort", onAbort);
@@ -221,16 +233,30 @@ export const fetchHabitsMeta = (
   );
 
 /**
- * Stores a dataset assembled on the client — Statistics merges its all-time
- * history from per-year chunks — under `key`, with the same TTL and
- * deduplication as a plain range fetch, so revisiting the page reuses the
- * merged list instead of re-downloading every chunk.
+ * The aggregated statistics we last stored for a range key, or null if never
+ * fetched — lets the Overall section paint without a skeleton on a return visit.
  */
-export const fetchDerivedHabits = (
-  key: string,
-  load: (signal: AbortSignal) => Promise<HabitWithCompletions[]>,
+export const peekStats = (key: string): HabitStatsResult | null =>
+  peek<HabitStatsResult>(key, "stats");
+
+/**
+ * Aggregated statistics for a range through the shared cache: one server
+ * query per key instead of the per-year history downloads this section used
+ * to fan out, with the same TTL, dedupe, and abort refcounting as habit data.
+ */
+export const fetchStats = (
+  token: string,
+  from: string,
+  to: string,
+  period: StatsPeriodKey,
   signal?: AbortSignal,
-): Promise<HabitWithCompletions[]> => fetchCached(key, "full", load, signal);
+): Promise<HabitStatsResult> =>
+  fetchCached(
+    statsCacheKey(from, to, period),
+    "stats",
+    (requestSignal) => getHabitStats(token, from, to, period, requestSignal),
+    signal,
+  );
 
 /**
  * Drops one key — or, with no key, the whole cache — after a mutation, so the

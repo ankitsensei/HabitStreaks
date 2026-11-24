@@ -186,6 +186,7 @@ One-time configuration (the #1 source of "it doesn't work" — check these first
 | `POST` | `/api/auth/login` | Email + password → JWT |
 | `POST` | `/api/auth/google` | Auth0 code exchange → JWT |
 | `GET` | `/api/habits?from&to` | Habits + completions in a date range 🔒 — add `fields=meta` for habit metadata + a check-in count instead of the completion history |
+| `GET` | `/api/habits/stats?from&to&period` | One aggregated query for the Statistics "Overall" section: summary numbers + per-day/week/month/year bucket totals 🔒 |
 | `POST` | `/api/habits/newhabit` | Create habit 🔒 |
 | `PATCH` | `/api/habits/:id` | Update habit 🔒 |
 | `DELETE` | `/api/habits/:id` | Delete habit 🔒 |

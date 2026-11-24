@@ -257,6 +257,236 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+const STATS_PERIODS = ["day", "week", "month", "year"] as const;
+
+type StatsPeriodKey = (typeof STATS_PERIODS)[number];
+
+const isStatsPeriod = (value: unknown): value is StatsPeriodKey =>
+  typeof value === "string" &&
+  (STATS_PERIODS as readonly string[]).includes(value);
+
+// Aggregated stats span a lifetime range (unlike raw history, capped at 371
+// days), so the cap is generous: 20 years of days.
+const STATS_MAX_DAYS = 7305;
+
+// The bucket key a day falls into, for the requested period. Weeks start on
+// Sunday to match the client's calendar view.
+const bucketKeySql = (column: string) =>
+  `CASE $4::text
+     WHEN 'day' THEN to_char(${column}, 'YYYY-MM-DD')
+     WHEN 'week' THEN to_char(${column} - (extract(dow FROM ${column}))::int, 'YYYY-MM-DD')
+     WHEN 'month' THEN to_char(${column}, 'YYYY-MM')
+     ELSE to_char(${column}, 'YYYY')
+   END`;
+
+// One statement answers the whole Statistics "Overall" section.
+//
+// The client used to build this view from N parallel full-range
+// /api/habits requests merged in the browser — a growing amount of raw
+// completion history for a user active since 2020. Here the database does a
+// single GROUP BY pass: per-day counts, gaps-and-islands streak runs, the
+// summary, and the period buckets are all computed in SQL and returned as one
+// JSON row, so the browser downloads aggregates instead of every date string.
+const STATS_SQL = `
+  WITH habit_rows AS (
+    SELECT id,
+           target_per_week::float8 AS target_per_week,
+           created_at::date AS created_date
+    FROM habits
+    WHERE user_id = $1
+  ),
+  daily AS (
+    SELECT c.completed_on AS day,
+           count(*)::int AS completions,
+           (count(DISTINCT c.habit_id)
+             FILTER (WHERE h.created_date <= c.completed_on))::int AS eligible_done
+    FROM habit_completions c
+    JOIN habit_rows h ON h.id = c.habit_id
+    WHERE c.completed_on BETWEEN $2::date AND $3::date
+    GROUP BY c.completed_on
+  ),
+  days AS (
+    SELECT d.day,
+           d.completions,
+           d.eligible_done,
+           -- How many habits were already created on that day: a day counts as
+           -- perfect only when every one of them has a check-in.
+           (SELECT count(*)
+            FROM habit_rows h
+            WHERE h.created_date <= d.day)::int AS habit_total
+    FROM daily d
+  ),
+  -- Gaps-and-islands: consecutive days share (day - row_number) as their run.
+  run_keys AS (
+    SELECT day, day - (row_number() OVER (ORDER BY day))::int AS run_key
+    FROM days
+  ),
+  run_lengths AS (
+    SELECT run_key, count(*)::int AS run_length, max(day) AS end_day
+    FROM run_keys
+    GROUP BY run_key
+  ),
+  totals AS (
+    SELECT COALESCE(sum(completions), 0)::int AS total_check_ins,
+           count(*)::int AS active_days
+    FROM days
+  ),
+  expected AS (
+    -- Mirrors the client: target_per_week / 7 for every day since the habit
+    -- was created (at least one day), summed across all of the user's habits.
+    SELECT COALESCE(
+             sum(target_per_week / 7.0
+                 * GREATEST(1, $3::date - created_date + 1)),
+             0
+           )::float8 AS expected_check_ins
+    FROM habit_rows
+  ),
+  summary AS (
+    SELECT t.total_check_ins,
+           t.active_days,
+           (SELECT count(*)
+            FROM days
+            WHERE habit_total >= 1 AND eligible_done = habit_total)::int AS perfect_days,
+           -- Current streak: only the last run counts, and only when it reaches
+           -- today (or yesterday, so an unfinished today doesn't break it).
+           COALESCE(
+             (SELECT CASE WHEN rl.end_day >= $3::date - 1
+                          THEN rl.run_length
+                          ELSE 0 END
+              FROM run_lengths rl
+              ORDER BY rl.end_day DESC
+              LIMIT 1),
+             0
+           )::int AS current_streak,
+           COALESCE((SELECT max(run_length) FROM run_lengths), 0)::int AS longest_streak,
+           CASE
+             WHEN e.expected_check_ins <= 0 THEN 0
+             ELSE LEAST(
+               100,
+               round((t.total_check_ins / e.expected_check_ins) * 100)
+             )::int
+           END AS completion_rate,
+           to_char(
+             -- Earliest check-in or habit creation inside the range; LEAST
+             -- skips NULLs, and the range end covers an account with no habits.
+             COALESCE(
+               LEAST((SELECT min(day) FROM days),
+                     (SELECT min(created_date) FROM habit_rows)),
+               $3::date
+             ),
+             'YYYY-MM-DD'
+           ) AS tracking_since
+    FROM totals t CROSS JOIN expected e
+  ),
+  daily_buckets AS (
+    SELECT ${bucketKeySql("day")} AS key,
+           sum(completions)::int AS completions
+    FROM days
+    GROUP BY 1
+  ),
+  -- Every bucket in the range, including empty ones, so a chart can plot gaps.
+  series AS (
+    SELECT generate_series(
+      CASE $4::text
+        WHEN 'day' THEN $2::date
+        WHEN 'week' THEN $2::date - (extract(dow FROM $2::date))::int
+        WHEN 'month' THEN date_trunc('month', $2::date)::date
+        ELSE date_trunc('year', $2::date)::date
+      END,
+      CASE $4::text
+        WHEN 'day' THEN $3::date
+        WHEN 'week' THEN $3::date - (extract(dow FROM $3::date))::int
+        WHEN 'month' THEN date_trunc('month', $3::date)::date
+        ELSE date_trunc('year', $3::date)::date
+      END,
+      CASE $4::text
+        WHEN 'day' THEN INTERVAL '1 day'
+        WHEN 'week' THEN INTERVAL '7 days'
+        WHEN 'month' THEN INTERVAL '1 month'
+        ELSE INTERVAL '1 year'
+      END
+    )::date AS day
+  ),
+  buckets AS (
+    SELECT s.key, COALESCE(d.completions, 0)::int AS completions
+    FROM (SELECT ${bucketKeySql("day")} AS key FROM series) s
+    LEFT JOIN daily_buckets d ON d.key = s.key
+  )
+  SELECT json_build_object(
+           'summary', (SELECT to_jsonb(sm) FROM summary sm),
+           'buckets',
+           COALESCE((SELECT json_agg(to_jsonb(b) ORDER BY b.key)
+                     FROM buckets b), '[]'::json)
+         ) AS result
+`;
+
+// Aggregated statistics for a date range: one round trip instead of N
+// full-history downloads. period controls the bucket granularity of the
+// returned `buckets` array; `summary` always describes the whole range.
+router.get("/stats", async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+
+  if (!userId) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+
+  const fromQuery = req.query.from;
+  const toQuery = req.query.to;
+  const periodQuery = req.query.period;
+
+  if (typeof fromQuery !== "string" || !isValidDateString(fromQuery)) {
+    return res.status(400).json({ error: "Invalid start date." });
+  }
+
+  if (typeof toQuery !== "string" || !isValidDateString(toQuery)) {
+    return res.status(400).json({ error: "Invalid end date." });
+  }
+
+  if (!isStatsPeriod(periodQuery)) {
+    return res
+      .status(400)
+      .json({ error: 'period must be "day", "week", "month", or "year".' });
+  }
+
+  const from = fromQuery;
+  const to = toQuery;
+
+  if (from > to) {
+    return res
+      .status(400)
+      .json({ error: "The start date must be before the end date." });
+  }
+
+  if (daysBetween(from, to) > STATS_MAX_DAYS) {
+    return res
+      .status(400)
+      .json({ error: `The date range must be ${STATS_MAX_DAYS} days or fewer.` });
+  }
+
+  try {
+    const result = await db.query(STATS_SQL, [userId, from, to, periodQuery]);
+    const payload = result.rows[0] as {
+      result: {
+        summary: Record<string, unknown>;
+        buckets: { key: string; completions: number }[];
+      };
+    };
+
+    return res.json({
+      from,
+      to,
+      period: periodQuery,
+      summary: payload.result.summary,
+      buckets: payload.result.buckets,
+    });
+  } catch (error) {
+    console.error("Failed to load habit stats:", error);
+    return res
+      .status(500)
+      .json({ error: "Couldn't load your statistics. Please try again." });
+  }
+});
+
 // Add Habit
 router.post("/newhabit", async (req: Request, res: Response) => {
   const parsed = parseHabitInput((req.body ?? {}) as Record<string, unknown>);

@@ -274,6 +274,53 @@ export const getHabitsMeta = (
   signal?: AbortSignal,
 ) => get<HabitsMetaResult>(habitsPath(from, to, "meta"), token, signal);
 
+/** Bucket granularity for `/api/habits/stats` — also the page's periods. */
+export type StatsPeriodKey = "day" | "week" | "month" | "year";
+
+/** Check-ins falling inside one bucket (`period` decides what a bucket is). */
+export interface HabitStatsBucket {
+  key: string;
+  completions: number;
+}
+
+/**
+ * All-time numbers for the Statistics "Overall" section, aggregated by the
+ * server so the client never downloads every completion date. Field names are
+ * snake_case because they are computed in SQL and passed through untouched.
+ */
+export interface HabitStatsSummary {
+  total_check_ins: number;
+  active_days: number;
+  perfect_days: number;
+  current_streak: number;
+  longest_streak: number;
+  completion_rate: number;
+  /** Local calendar day (YYYY-MM-DD) tracking started — parse with parseDateKey. */
+  tracking_since: string;
+}
+
+export interface HabitStatsResult {
+  from: string;
+  to: string;
+  period: StatsPeriodKey;
+  buckets: HabitStatsBucket[];
+  summary: HabitStatsSummary;
+}
+
+/** One aggregated query for a range instead of N full-history requests. */
+export const getHabitStats = (
+  token: string,
+  from: string,
+  to: string,
+  period: StatsPeriodKey,
+  signal?: AbortSignal,
+) =>
+  get<HabitStatsResult>(
+    `/api/habits/stats?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&period=${encodeURIComponent(period)}`,
+    token,
+    signal,
+  );
+
 export const toggleHabitCompletion = (
   token: string,
   habitId: number,

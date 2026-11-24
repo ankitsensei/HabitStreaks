@@ -14,10 +14,13 @@ import {
 } from "../components/Icons";
 import Navbar from "../components/Navbar";
 import { ApiError, isAbortError } from "../lib/api";
-import type { HabitWithCompletions } from "../lib/api";
+import type {
+ HabitStatsResult,
+ HabitStatsSummary,
+ HabitWithCompletions,
+} from "../lib/api";
 import {
  WEEKDAY_LABELS,
- buildOverallSummary,
  buildPeriodSummaries,
  formatDateKey,
  getHabitCreatedKey,
@@ -25,25 +28,25 @@ import {
  getPeriodViewRange,
  getToday,
  isPeriodAtCurrent,
+ parseDateKey,
  shiftPeriodCursor,
- splitRange,
 } from "../lib/habitStats";
 import type {
  ComparisonBucket,
- OverallSummary,
  PeriodSummary,
  StatsPeriod,
  StatsRange,
 } from "../lib/habitStats";
 import { clearToken, getToken, useAuth } from "../lib/auth";
 import {
- OVERALL_HABITS_KEY,
- fetchDerivedHabits,
  fetchHabits,
+ fetchStats,
  habitsCacheKey,
  invalidateHabits,
  isHabitsCacheFresh,
  peekHabits,
+ peekStats,
+ statsCacheKey,
 } from "../lib/habitsCache";
 
 const PERIODS: { id: StatsPeriod; label: string }[] = [
@@ -59,9 +62,6 @@ const PERIOD_SCOPE: Record<StatsPeriod, string> = {
  month: "this month",
  year: "this year",
 };
-
-// All-time data is fetched in chunks to stay under the API's 371-day limit.
-const OVERALL_CHUNK_DAYS = 365;
 
 const pluralize = (count: number, singular: string, plural: string) =>
  count === 1 ? singular : plural;
@@ -482,34 +482,6 @@ const InitialError = ({ message, onRetry }: InitialErrorProps) => (
  </div>
 );
 
-// Combine per-range responses into one habit list with every completion.
-const mergeHabitChunks = (chunks: HabitWithCompletions[][]) => {
- const byId = new Map<number, HabitWithCompletions>();
-
- for (const chunk of chunks) {
- for (const habit of chunk) {
- const existing = byId.get(habit.id);
-
- if (existing) {
- existing.completions.push(...habit.completions);
- } else {
- byId.set(habit.id, {
- ...habit,
- completions: [...habit.completions],
- });
- }
- }
- }
-
- return Array.from(byId.values()).map((habit) => ({
- ...habit,
- completions: Array.from(new Set(habit.completions)).sort(),
- }));
-};
-
-const getOverallChunks = (from: Date, to: Date) =>
- splitRange({ from, to }, OVERALL_CHUNK_DAYS);
-
 // Computed summaries are memoized on the identity of the habits array they
 // were built from. The shared cache hands back the same array on every
 // visit, so returning to this page reuses the previous computation instead
@@ -545,74 +517,46 @@ const memoPeriodSummaries = (
  return summaries;
 };
 
-const overallSummaryCache = new WeakMap<
- HabitWithCompletions[],
- Map<string, OverallSummary>
->();
-
-const memoOverallSummary = (
- habits: HabitWithCompletions[],
- today: Date,
-): OverallSummary => {
- const key = formatDateKey(today);
- let byDay = overallSummaryCache.get(habits);
-
- if (!byDay) {
- byDay = new Map();
- overallSummaryCache.set(habits, byDay);
- }
-
- const cached = byDay.get(key);
-
- if (cached) {
- return cached;
- }
-
- const summary = buildOverallSummary(habits, today);
- byDay.set(key, summary);
-
- return summary;
-};
-
 interface OverallSectionProps {
- overall: OverallSummary;
+ /** The server-aggregated all-time summary from GET /api/habits/stats. */
+ overall: HabitStatsSummary;
  habitCount: number;
 }
 
 const OverallSection = ({ overall, habitCount }: OverallSectionProps) => {
- const since = overall.trackingSince.toLocaleDateString(undefined, {
- month: "long",
- year: "numeric",
- });
+ const since = parseDateKey(overall.tracking_since).toLocaleDateString(
+ undefined,
+ { month: "long", year: "numeric" },
+ );
  const stats = [
  {
  label: "Total check-ins",
- value: overall.totalCheckIns.toLocaleString(),
+ value: overall.total_check_ins.toLocaleString(),
  sub: "all time",
  },
  {
  label: "Active days",
- value: overall.activeDays.toLocaleString(),
+ value: overall.active_days.toLocaleString(),
  sub: "with a check-in",
  },
  {
  label: "Perfect days",
- value: overall.perfectDays.toLocaleString(),
+ value: overall.perfect_days.toLocaleString(),
  sub: "every habit done",
  },
  {
  label: "Current streak",
- value: `${overall.currentStreak}`,
+ value: `${overall.current_streak}`,
  sub: "consecutive active days",
  },
  {
  label: "Best streak",
- value: `${overall.longestStreak}`,
+ value: `${overall.longest_streak}`,
  sub: "longest active run",
  },
  {
  label: "Completion",
- value: `${overall.completionRate}%`,
+ value: `${overall.completion_rate}%`,
  sub: "of weekly targets",
  },
  ];
@@ -724,12 +668,10 @@ const Statistics = () => {
  const [error, setError] = useState<string | null>(null);
  const [showAll, setShowAll] = useState(false);
  const [retryNonce, setRetryNonce] = useState(0);
- const [overallHabits, setOverallHabits] = useState<
- HabitWithCompletions[] | null
- >(() => peekHabits(OVERALL_HABITS_KEY));
- const [overallError, setOverallError] = useState<string | null>(null);
- const [overallRetryNonce, setOverallRetryNonce] = useState(0);
 
+ // The all-time range: from the first day of the earliest habit's year to
+ // today. Computed before the stats state so its cache key exists on the very
+ // first render (a returning visit seeds from the cache synchronously).
  const earliestCreatedKey = useMemo(() => {
  if (habits.length === 0) {
  return null;
@@ -740,6 +682,27 @@ const Statistics = () => {
  return key < earliest ? key : earliest;
  }, getHabitCreatedKey(habits[0]));
  }, [habits]);
+
+ const overallFrom =
+ earliestCreatedKey === null
+ ? null
+ : `${earliestCreatedKey.slice(0, 4)}-01-01`;
+ const overallTo = formatDateKey(today);
+ // Period only decides bucket granularity; the summary (all this section
+ // renders) always covers the whole range. "year" keeps the payload tiny.
+ const overallStatsKey =
+ overallFrom === null
+ ? null
+ : statsCacheKey(overallFrom, overallTo, "year");
+
+ const [overallStats, setOverallStats] = useState<HabitStatsSummary | null>(
+ () =>
+ overallStatsKey === null
+ ? null
+ : (peekStats(overallStatsKey)?.summary ?? null),
+ );
+ const [overallError, setOverallError] = useState<string | null>(null);
+ const [overallRetryNonce, setOverallRetryNonce] = useState(0);
 
  const viewRange = useMemo(
  () => getPeriodViewRange(period, cursor, today),
@@ -841,7 +804,7 @@ const Statistics = () => {
  ]);
 
  useEffect(() => {
- if (!isAuthenticated || earliestCreatedKey === null) {
+ if (!isAuthenticated || overallFrom === null || overallStatsKey === null) {
  return;
  }
 
@@ -851,35 +814,18 @@ const Statistics = () => {
  return;
  }
 
- const earliestCreated = new Date(`${earliestCreatedKey}T00:00:00`);
- const start = new Date(earliestCreated.getFullYear(), 0, 1);
- const chunks = getOverallChunks(start, today);
  const controller = new AbortController();
- const cached = peekHabits(OVERALL_HABITS_KEY);
+ const cached = peekStats(overallStatsKey);
 
- const applyOverall = (data: HabitWithCompletions[]) => {
- setOverallHabits(data);
+ const applyOverall = (result: HabitStatsResult) => {
+ setOverallStats(result.summary);
  setOverallError(null);
  };
 
  const refresh = () => {
- // The merged dataset lives in the shared cache under its own key, so a
- // returning visit reuses it instead of re-downloading every chunk.
- void fetchDerivedHabits(
- OVERALL_HABITS_KEY,
- (signal) =>
- Promise.all(
- chunks.map((chunk) =>
- fetchHabits(
- token,
- formatDateKey(chunk.from),
- formatDateKey(chunk.to),
- signal,
- ),
- ),
- ).then(mergeHabitChunks),
- controller.signal,
- )
+ // One aggregated query for the whole range, cached under its own key so a
+ // returning visit reuses it instead of re-running the aggregation.
+ void fetchStats(token, overallFrom, overallTo, "year", controller.signal)
  .then(applyOverall)
  .catch((err: unknown) => {
  // The page was left or the effect re-ran — not a failure to report.
@@ -908,31 +854,28 @@ const Statistics = () => {
  };
 
  if (cached) {
- // Cache hit: paint the merged dataset immediately, then refresh it in
- // the background once the entry has aged past the TTL.
+ // Cache hit: paint the summary immediately, then refresh it in the
+ // background once the entry has aged past the TTL.
  applyOverall(cached);
  }
 
- if (!cached || !isHabitsCacheFresh(OVERALL_HABITS_KEY)) {
+ if (!cached || !isHabitsCacheFresh(overallStatsKey)) {
  refresh();
  }
 
  return () => controller.abort();
  }, [
- earliestCreatedKey,
  isAuthenticated,
  navigate,
+ overallFrom,
+ overallStatsKey,
+ overallTo,
  overallRetryNonce,
- today,
  ]);
 
  const summaries = useMemo(
  () => memoPeriodSummaries(habits, viewRange, today),
  [habits, viewRange, today],
- );
- const overall = useMemo(
- () => (overallHabits ? memoOverallSummary(overallHabits, today) : null),
- [overallHabits, today],
  );
 
  if (!isAuthenticated) {
@@ -1003,9 +946,11 @@ const Statistics = () => {
  };
 
  const handleOverallRetry = () => {
- // Drop the merged dataset too: the retry must re-download it, not re-read
- // the same cached copy that just failed to refresh.
- invalidateHabits(OVERALL_HABITS_KEY);
+ // Drop the cached aggregate too: the retry must re-run the query, not
+ // re-read the same cached copy that just failed to refresh.
+ if (overallStatsKey !== null) {
+ invalidateHabits(overallStatsKey);
+ }
  setOverallError(null);
  setOverallRetryNonce((nonce) => nonce + 1);
  };
@@ -1381,8 +1326,8 @@ const Statistics = () => {
  <ContentSkeleton />
  )}
 
- {overall ? (
- <OverallSection overall={overall} habitCount={habits.length} />
+ {overallStats ? (
+ <OverallSection overall={overallStats} habitCount={habits.length} />
  ) : overallError ? (
  <OverallError
  message={overallError}
