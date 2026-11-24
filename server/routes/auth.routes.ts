@@ -1,4 +1,8 @@
-import express, { type Request, type Response } from "express";
+import express, {
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { randomBytes } from "node:crypto";
@@ -26,8 +30,123 @@ const emailDeliveryError = {
     "We couldn't send the verification email right now. Please try again later.",
 };
 
+// --- Rate limiting ---------------------------------------------------------
+// Sliding-window counters held in a plain Map: no dependency and no extra
+// round trip, but enough to turn brute-force guessing into a crawl and to
+// keep a burst of auth traffic from burning bcrypt hashes, OTP mails, and
+// database lookups. Counters are per process, so a deployment scaled across
+// several instances throttles each one separately — still enough to blunt a
+// single attacker.
+//
+// The credential routes are counted twice: once per client address and once
+// per targeted account. Rotating source addresses therefore buys no extra
+// guesses at a password or a 6-digit OTP, while a shared address (office
+// NAT, mobile carrier) still gets its own budget per account.
+const RATE_WINDOW_MS = 15 * 60 * 1000;
+
+// Ceiling on tracked keys so a flood of distinct addresses can't grow the
+// Map without bound: expired windows are swept first, then the oldest keys
+// (Map preserves insertion order) are evicted.
+const RATE_MAX_KEYS = 10_000;
+
+const rateWindows = new Map<string, number[]>();
+
+const clientAddress = (req: Request) => {
+  // The platform's forwarded address when there is one — behind a proxy every
+  // request shares the proxy's socket address, so req.ip alone would give all
+  // callers a single shared bucket.
+  const forwarded = req.headers["x-forwarded-for"];
+  const first = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+
+  return first?.split(",")[0].trim() || req.ip || "unknown";
+};
+
+// Per-account budget key; falls back to the address for the odd request that
+// carries no email.
+const accountKey = (req: Request) => {
+  const email = req.body?.email;
+
+  return typeof email === "string" && email.trim() !== ""
+    ? email.trim().toLowerCase()
+    : clientAddress(req);
+};
+
+const sweepRateWindows = (now = Date.now()) => {
+  for (const [key, hits] of rateWindows) {
+    while (hits.length > 0 && hits[0] <= now - RATE_WINDOW_MS) {
+      hits.shift();
+    }
+
+    if (hits.length === 0) {
+      rateWindows.delete(key);
+    }
+  }
+};
+
+// Windows nobody calls again would otherwise keep their timestamps forever.
+setInterval(sweepRateWindows, 5 * 60 * 1000).unref();
+
+const rateLimit =
+  (scope: string, max: number, keyOf: (req: Request) => string) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    const now = Date.now();
+    const key = `${scope}:${keyOf(req)}`;
+    let hits = rateWindows.get(key);
+
+    if (hits === undefined) {
+      if (rateWindows.size >= RATE_MAX_KEYS) {
+        sweepRateWindows(now);
+
+        while (rateWindows.size >= RATE_MAX_KEYS) {
+          const oldest = rateWindows.keys().next().value;
+
+          if (oldest === undefined) {
+            break;
+          }
+
+          rateWindows.delete(oldest);
+        }
+      }
+
+      hits = [];
+      rateWindows.set(key, hits);
+    }
+
+    while (hits.length > 0 && hits[0] <= now - RATE_WINDOW_MS) {
+      hits.shift();
+    }
+
+    if (hits.length >= max) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((hits[0] + RATE_WINDOW_MS - now) / 1000),
+      );
+
+      res.setHeader("Retry-After", String(retryAfterSeconds));
+      return res.status(429).json({
+        error: "Too many attempts. Please wait a few minutes and try again.",
+      });
+    }
+
+    hits.push(now);
+    next();
+  };
+
+// Per-route budgets, checked before any hashing, mail, or query runs. The
+// login and OTP limits are per account (10 guesses per window is generous
+// for a human and hopeless for a 6-digit code); register and Google have no
+// account to key on yet, so they are limited per address.
+const registerLimit = rateLimit("register", 5, clientAddress);
+const verifyIp = rateLimit("verify-otp", 20, clientAddress);
+const verifyAccount = rateLimit("verify-otp:account", 10, accountKey);
+const resendIp = rateLimit("resend-otp", 10, clientAddress);
+const resendAccount = rateLimit("resend-otp:account", 3, accountKey);
+const loginIp = rateLimit("login", 20, clientAddress);
+const loginAccount = rateLimit("login:account", 10, accountKey);
+const googleLimit = rateLimit("google", 20, clientAddress);
+
 // REGISTER ROUTE
-router.post("/register", async (req: Request, res: Response) => {
+router.post("/register", registerLimit, async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -91,7 +210,7 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // VERIFY OTP ROUTE
-router.post("/verify-otp", async (req: Request, res: Response) => {
+router.post("/verify-otp", verifyIp, verifyAccount, async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
   if (!email || !otp) {
@@ -142,7 +261,7 @@ router.post("/verify-otp", async (req: Request, res: Response) => {
 });
 
 // RESEND OTP ROUTE
-router.post("/resend-otp", async (req: Request, res: Response) => {
+router.post("/resend-otp", resendIp, resendAccount, async (req: Request, res: Response) => {
   const { email } = req.body;
 
   if (!email) {
@@ -189,7 +308,7 @@ router.post("/resend-otp", async (req: Request, res: Response) => {
 });
 
 // LOGIN ROUTE
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", loginIp, loginAccount, async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -252,7 +371,7 @@ const auth0ConfigError = {
     "Google sign-in isn't configured on the server yet. Set AUTH0_DOMAIN, AUTH0_CLIENT_ID and AUTH0_CLIENT_SECRET.",
 };
 
-router.post("/google", async (req: Request, res: Response) => {
+router.post("/google", googleLimit, async (req: Request, res: Response) => {
   const { code, redirectUri } = req.body;
 
   if (!code || !redirectUri) {
