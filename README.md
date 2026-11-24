@@ -99,9 +99,10 @@ cd ../server && npm install
 
 ### 2. Set up the database
 
-Run the SQL files in `server/sql/` against your database (users is created by the auth flow's first register, or create it yourself):
+Run the SQL files in `server/sql/` against your database (`users` first — `habits` references it):
 
 ```bash
+psql "$DATABASE_URL" -f server/sql/users.sql
 psql "$DATABASE_URL" -f server/sql/habits.sql
 psql "$DATABASE_URL" -f server/sql/habit_completions.sql
 psql "$DATABASE_URL" -f server/sql/habits_sort_order.sql
